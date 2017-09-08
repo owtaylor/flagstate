@@ -1,0 +1,9 @@
+registry:
+    url: https://candidate-registry.fedoraproject.org
+database:
+    postgres:
+        url: postgres://metastore:mypassword@localhost:7432/metastore?sslmode=disable
+interval:
+    fetch_all: 1h
+    garbage_collect: 30m
+
