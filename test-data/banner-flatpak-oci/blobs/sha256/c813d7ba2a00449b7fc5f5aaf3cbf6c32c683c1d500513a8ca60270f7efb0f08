@@ -1,0 +1,16 @@
+{
+  "created" : "2017-09-07T19:54:23Z",
+  "architecture" : "arm64",
+  "os" : "linux",
+  "config" : {
+    "Memory" : 0,
+    "MemorySwap" : 0,
+    "CpuShares" : 0
+  },
+  "rootfs" : {
+    "type" : "layers",
+    "diff_ids" : [
+      "sha256:5ae3d7cb247bd8998455618133183d4bdb036a9aea5269c13b338e1765da2c27"
+    ]
+  }
+}

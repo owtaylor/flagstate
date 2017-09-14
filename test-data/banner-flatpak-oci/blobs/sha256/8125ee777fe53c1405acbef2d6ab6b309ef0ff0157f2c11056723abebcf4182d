@@ -1,0 +1,32 @@
+{
+  "schemaVersion" : 2,
+  "mediaType" : "application/vnd.oci.image.manifest.v1+json",
+  "config" : {
+    "mediaType" : "application/vnd.oci.image.config.v1+json",
+    "digest" : "sha256:c813d7ba2a00449b7fc5f5aaf3cbf6c32c683c1d500513a8ca60270f7efb0f08",
+    "size" : 314
+  },
+  "layers" : [
+    {
+      "mediaType" : "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest" : "sha256:e0504937d72e87cd26bbcda0545b7ae383373098ff8c25b536bd107584ef4e50",
+      "size" : 6007
+    }
+  ],
+  "annotations" : {
+    "org.flatpak.commit-metadata.xa.ref" : "YXBwL2NvbS5jZWRhcl9zb2x1dGlvbnMuQmFubmVyL3g4Nl82NC9tYXN0ZXIAAHM=",
+    "org.flatpak.body" : "Name: com.cedar_solutions.Banner\nArch: x86_64\nBranch: master\nBuilt with: Flatpak 0.9.8\n",
+    "org.flatpak.commit-metadata.xa.metadata" : "W0FwcGxpY2F0aW9uXQpuYW1lPWNvbS5jZWRhcl9zb2x1dGlvbnMuQmFubmVyCnJ1bnRpbWU9b3JnLmZlZG9yYXByb2plY3QuTWluaW1hbFBsYXRmb3JtL3g4Nl82NC8yNgpzZGs9b3JnLmZlZG9yYXByb2plY3QuTWluaW1hbFBsYXRmb3JtL3g4Nl82NC8yNgpjb21tYW5kPWJhbm5lcgoAAHM=",
+    "org.flatpak.commit-metadata.ostree.ref-binding" : "YXBwL2NvbS5jZWRhcl9zb2x1dGlvbnMuQmFubmVyL3g4Nl82NC9tYXN0ZXIALQBhcw==",
+    "org.flatpak.download-size" : "6007",
+    "org.flatpak.commit-metadata.xa.download-size" : "AAAAAAAAFvIAdA==",
+    "org.flatpak.commit-metadata.xa.installed-size" : "AAAAAAAAQAAAdA==",
+    "org.flatpak.subject" : "Export com.cedar_solutions.Banner",
+    "org.flatpak.installed-size" : "16384",
+    "org.flatpak.commit" : "3eddff0efa5d3ace9e28834f5d1e5a042913ae82473ed13d33508173f425687c",
+    "org.flatpak.metadata" : "[Application]\nname=com.cedar_solutions.Banner\nruntime=org.fedoraproject.MinimalPlatform/x86_64/26\nsdk=org.fedoraproject.MinimalPlatform/x86_64/26\ncommand=banner\n",
+    "org.opencontainers.image.ref.name" : "app/com.cedar_solutions.Banner/x86_64/master",
+    "org.flatpak.timestamp" : "1504814063",
+    "org.flatpak.commit-metadata.ostree.collection-binding" : "AABz"
+  }
+}
