@@ -1,4 +1,12 @@
-all: binary
+all: hooks binary
+
+hooks:
+	@: ; \
+	gitdir=$$(git rev-parse --git-dir) ; \
+	if [ -d $$gitdir/hooks ] ; then \
+	    cmp $$gitdir/../util/pre-commit  $$gitdir/hooks/pre-commit 2>/dev/null || \
+	         echo "Updating $$gitdir/hooks/pre-commit" && cp $$gitdir/../util/pre-commit $$gitdir/hooks/pre-commit ; \
+	fi
 
 binary:
 	go build
