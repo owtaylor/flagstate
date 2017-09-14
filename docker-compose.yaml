@@ -1,0 +1,32 @@
+version: '2'
+
+volumes:
+    db:
+    registry:
+
+services:
+    db:
+        image: postgres
+        hostname: db
+        ports:
+            - 7432:5432
+        environment:
+            - POSTGRES_DB=metastore
+            - POSTGRES_USER=metastore
+            - POSTGRES_PASSWORD=mypassword
+        volumes:
+            - db:/var/lib/postgresql/data:z
+
+    registry:
+        image: docker.io/owtaylor/registry-oci:latest
+        ports:
+            - 7000:5000
+        volumes:
+            - registry:/var/lib/registry:z
+            - ./services/registry/config.yml:/etc/docker/registry/config.yml
+
+    index:
+        build: .
+        hostname: index
+        ports:
+            - 8088:8088

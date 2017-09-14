@@ -1,0 +1,10 @@
+registry:
+    url: http://registry:5000
+events:
+    token: "OPEN_SESAME"
+database:
+    postgres:
+        url: postgres://metastore:mypassword@db:5432/metastore?sslmode=disable
+interval:
+    fetch_all: 1h
+    garbage_collect: 30m
