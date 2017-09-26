@@ -68,6 +68,28 @@ psql -d <url> < schema.sql
 **Note** that `schema.sql` currently drops any existing content from the database,
 assuming that it can simply be refetched from the registry.
 
+Development
+-----------
+There is a test environment that can be started with:
+
+```
+docker-compose up
+```
+
+This starts a cluster of database, registry, metastore and a web proxy that joins
+the registry and metastore into a single web presence, available on
+http://127.0.0.1:7080, or https://127.0.0.1:7443. On Fedora or RHEL you can
+
+```
+make trust-local
+```
+
+To add the CA cert for the https URL to your system cert store and a hostname to
+/etc/hosts. (Note: modifies your system config with sudo!), and then you can access
+the web frontend on https://registry.local.fishsoup.net:7443. (The point of this
+complexity is mostly to allow is to allow testing tools that access the registry/index
+via HTTPS and expect a verifiable certificate.)
+
 License
 -------
 metastore is distributed is distributed under the [Apache License, Version 2.0](LICENSE).

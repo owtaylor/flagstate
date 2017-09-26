@@ -1,8 +1,9 @@
-version: '2'
+version: '2.1'
 
 volumes:
     db:
     registry:
+    tls:
 
 services:
     db:
@@ -23,10 +24,19 @@ services:
             - 7000:5000
         volumes:
             - registry:/var/lib/registry:z
-            - ./services/registry/config.yml:/etc/docker/registry/config.yml
+            - ./services/registry/config.yml:/etc/docker/registry/config.yml:ro
 
     index:
         build: .
         hostname: index
         ports:
             - 8088:8088
+
+    frontend:
+        build: services/frontend
+        ports:
+            - 7080:80
+            - 7443:443
+        volumes:
+            - ${TEST_DATA:-./test-data}:/mnt/test-data:ro
+            - tls:/etc/pki/tls:z
