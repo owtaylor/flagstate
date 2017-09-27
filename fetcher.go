@@ -168,6 +168,7 @@ func (f *Fetcher) fetchAll(ctx context.Context) error {
 
 	err = tx.DeleteMissingRepos(allRepos)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 
