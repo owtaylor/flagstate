@@ -29,7 +29,7 @@ RUN set -x && git clone https://github.com/projectatomic/skopeo /go/src/github.c
 WORKDIR $DISTRIBUTION_DIR
 COPY . $DISTRIBUTION_DIR
 
-RUN GOPATH=/go go build
+RUN GOPATH=/go make binary
 
 EXPOSE 8088
 CMD ["./services/index/entrypoint.sh"]

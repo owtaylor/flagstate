@@ -81,5 +81,6 @@ func main() {
 	http.Handle("/index", NewIndexHandler(db))
 	http.Handle("/", NewHomeHandler(db))
 
+	log.Printf("metastore: %s", BuildString)
 	log.Fatal(http.ListenAndServe(":8088", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)))
 }

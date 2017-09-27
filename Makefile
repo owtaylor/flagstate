@@ -9,7 +9,9 @@ hooks:
 	fi
 
 binary:
-	go build
+	v=`git describe --always --dirty=*` ; \
+        t=`date +"%Y-%m-%dT%H:%M:%SZ"` ; \
+	    go build -ldflags "-X main.GitVersion=$$v -X main.BuildTime=$$t"
 
 test:
 	go test
