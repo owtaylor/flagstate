@@ -45,7 +45,7 @@ func (pdb *postgresDatabase) DoQuery(ctx context.Context, query *Query) ([]*Repo
 		return nil, err
 	}
 
-	results, err := tx.DoQuery(NewQuery())
+	results, err := tx.DoQuery(query)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func makeWhereClause(query *Query) (clause string, args []interface{}) {
 				annotation: value,
 			})
 			args = append(args, argJson)
-			clause += ` AND i.annotations <@ ` + strconv.Itoa(len(args))
+			clause += ` AND i.annotations @> $` + strconv.Itoa(len(args))
 		}
 	}
 
