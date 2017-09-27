@@ -10,6 +10,7 @@ import (
 	"log"
 	"sort"
 	"strconv"
+	"time"
 )
 
 type postgresDatabase struct {
@@ -17,7 +18,9 @@ type postgresDatabase struct {
 }
 
 type postgresTransaction struct {
-	tx *sql.Tx
+	tx               *sql.Tx
+	modify           bool
+	modificationTime time.Time
 }
 
 func NewPostgresDB(url string) (Database, error) {
@@ -58,12 +61,51 @@ func (pdb *postgresDatabase) DoQuery(ctx context.Context, query *Query) ([]*Repo
 	return results, nil
 }
 
+func (pdb *postgresDatabase) ModificationTime() (time.Time, error) {
+	var t time.Time
+	err := pdb.db.QueryRow(
+		`SELECT modification_time FROM modification`).Scan(&t)
+	return t, err
+}
+
 func (ptx postgresTransaction) Commit() error {
+	if ptx.modify {
+		err := ptx.tx.QueryRow(
+			`UPDATE modification SET modification_time = now() RETURNING modification_time`).Scan(&ptx.modificationTime)
+		if err != nil {
+			ptx.tx.Rollback()
+			return err
+		}
+	}
+
 	return ptx.tx.Commit()
 }
 
 func (ptx postgresTransaction) Rollback() error {
 	return ptx.tx.Rollback()
+}
+
+func (ptx postgresTransaction) Modified() (bool, time.Time) {
+	return ptx.modify, ptx.modificationTime
+}
+
+func (ptx postgresTransaction) exec(query string, args ...interface{}) (sql.Result, error) {
+	res, err := ptx.tx.Exec(query, args...)
+
+	if err != nil {
+		return res, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return res, err
+	}
+
+	if rowsAffected > 0 {
+		ptx.modify = true
+	}
+
+	return res, err
 }
 
 func makeWhereClause(query *Query) (clause string, args []interface{}) {
@@ -352,7 +394,7 @@ func (ptx postgresTransaction) setTags(repository string, target string, dgst di
 
 	for _, tag := range tags {
 		delete(oldTags, tag)
-		_, err := ptx.tx.Exec(
+		_, err := ptx.exec(
 			`INSERT INTO `+target+`_tag (repository, tag, `+target+` ) `+
 				`VALUES ($1, $2, $3) `+
 				`ON CONFLICT (repository, tag) DO UPDATE SET `+target+` = $3 `,
@@ -364,7 +406,7 @@ func (ptx postgresTransaction) setTags(repository string, target string, dgst di
 	}
 
 	for tag := range oldTags {
-		_, err := ptx.tx.Exec(
+		_, err := ptx.exec(
 			`DELETE FROM `+target+`_tag `+
 				`WHERE repository = $1 AND tag = $2 AND `+target+` = $3 `,
 			repository, tag, dgst)
@@ -387,7 +429,7 @@ func (ptx postgresTransaction) SetImageListTags(repository string, dgst digest.D
 func (ptx postgresTransaction) storeImage(repository string, image *Image) error {
 	log.Printf("Storing image %s/%s", repository, image.Digest)
 	annotationsJson, _ := json.Marshal(image.Annotations)
-	_, err := ptx.tx.Exec(
+	_, err := ptx.exec(
 		`INSERT INTO image (digest, media_type, arch, os, annotations) `+
 			`VALUES ($1, $2, $3, $4, $5) ON CONFLICT (digest) DO NOTHING `,
 		image.Digest, image.MediaType, image.Arch, image.OS, annotationsJson)
@@ -406,7 +448,7 @@ func (ptx postgresTransaction) StoreImage(repository string, image *TaggedImage)
 func (ptx postgresTransaction) storeImageList(repository string, list *ImageList) error {
 	log.Printf("Storing list %s/%s", repository, list.Digest)
 	annotationsJson, _ := json.Marshal(list.Annotations)
-	res, err := ptx.tx.Exec(
+	res, err := ptx.exec(
 		`INSERT INTO list (digest, annotations) `+
 			`VALUES ($1, $2) ON CONFLICT (digest) DO NOTHING `,
 		list.Digest, annotationsJson)
@@ -427,7 +469,7 @@ func (ptx postgresTransaction) storeImageList(repository string, list *ImageList
 			return err
 		}
 
-		_, err := ptx.tx.Exec(
+		_, err := ptx.exec(
 			`INSERT INTO list_entry (list, image) `+
 				`VALUES ($1, $2) ON CONFLICT (list, image) DO NOTHING `,
 			list.Digest, image.Digest)
@@ -450,7 +492,7 @@ func (ptx postgresTransaction) StoreImageList(repository string, list *TaggedIma
 
 func (ptx postgresTransaction) DeleteImage(repository string, dgst digest.Digest) error {
 	log.Printf("Deleting tags for image %s/%s", repository, dgst)
-	_, err := ptx.tx.Exec(
+	_, err := ptx.exec(
 		`DELETE FROM image_tag WHERE repository = $1 AND image = $2 `,
 		repository, dgst)
 
@@ -459,7 +501,7 @@ func (ptx postgresTransaction) DeleteImage(repository string, dgst digest.Digest
 
 func (ptx postgresTransaction) DeleteImageList(repository string, dgst digest.Digest) error {
 	log.Printf("Deleting tags for image_list %s/%s", repository, dgst)
-	_, err := ptx.tx.Exec(
+	_, err := ptx.exec(
 		`DELETE FROM list_tag WHERE repository = $1 AND list = $2 `,
 		repository, dgst)
 
@@ -486,7 +528,7 @@ func (ptx postgresTransaction) deleteMissingReposFromTable(table string, allRepo
 	}
 
 	for _, repo := range toDelete {
-		_, err := ptx.tx.Exec(`DELETE FROM `+table+`_tag WHERE repository = $1`,
+		_, err := ptx.exec(`DELETE FROM `+table+`_tag WHERE repository = $1`,
 			repo)
 		if err != nil {
 			return err
@@ -510,6 +552,9 @@ func (ptx postgresTransaction) DeleteMissingRepos(allRepos map[string]bool) erro
 }
 
 func (ptx postgresTransaction) DeleteUnused() error {
+	// We don't use ptx.exec() since changes here aren't really changes - they
+	// affect the data we return from a query
+
 	_, err := ptx.tx.Exec(
 		`DELETE FROM list ` +
 			`WHERE NOT EXISTS (SELECT * FROM list_tag WHERE list_tag.list = list.digest)`)

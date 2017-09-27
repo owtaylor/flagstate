@@ -19,6 +19,10 @@ func NewIndexHandler(db Database) http.Handler {
 }
 
 func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if CheckAndSetETag(ih.db, w, r) {
+		return
+	}
+
 	r.ParseForm()
 	q := NewQuery()
 

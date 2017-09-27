@@ -1,5 +1,10 @@
 DROP TABLE IF EXISTS image, image_tag, list, list_tag, list_entry CASCADE;
 
+CREATE TABLE modification (
+       modification_time timestamp with time zone
+);
+INSERT INTO modification VALUES (now());
+
 CREATE TABLE image (
        digest text PRIMARY KEY,
        media_type text,

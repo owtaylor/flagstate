@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/docker/distribution/digest"
+	"time"
 )
 
 type Query struct {
@@ -52,6 +53,7 @@ func (q *Query) AnnotationIs(annotation string, value string) *Query {
 type Tx interface {
 	Commit() error
 	Rollback() error
+	Modified() (bool, time.Time)
 
 	DoQuery(query *Query) ([]*Repository, error)
 
@@ -72,4 +74,6 @@ type Database interface {
 	Begin(ctx context.Context) (Tx, error)
 	// Convenience
 	DoQuery(ctx context.Context, query *Query) ([]*Repository, error)
+
+	ModificationTime() (time.Time, error)
 }

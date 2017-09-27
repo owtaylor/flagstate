@@ -130,6 +130,13 @@ func (f *Fetcher) garbageCollect(ctx context.Context) error {
 	return tx.Commit()
 }
 
+func (f *Fetcher) checkModification(tx Tx) {
+	modified, _ := tx.Modified()
+	if modified {
+		f.changes.Change()
+	}
+}
+
 func (f *Fetcher) fetchAll(ctx context.Context) error {
 	const pageSize = 100
 
@@ -176,7 +183,7 @@ func (f *Fetcher) fetchAll(ctx context.Context) error {
 		return err
 	}
 
-	f.changes.Change()
+	f.checkModification(tx)
 
 	for r := range allRepos {
 		f.channel <- fetchRequest{
@@ -511,5 +518,12 @@ func (f *Fetcher) fetchRepository(ctx context.Context, repository string) error 
 		return err
 	}
 
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	f.checkModification(tx)
+
+	return nil
 }

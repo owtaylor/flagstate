@@ -27,6 +27,10 @@ func NewHomeHandler(db Database) http.Handler {
 }
 
 func (hh *homeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if CheckAndSetETag(hh.db, w, r) {
+		return
+	}
+
 	ctx := context.Background()
 	results, err := hh.db.DoQuery(ctx, NewQuery())
 	if err != nil {
