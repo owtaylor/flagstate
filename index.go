@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type indexHandler struct {
@@ -18,8 +19,44 @@ func NewIndexHandler(db Database) http.Handler {
 }
 
 func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	q := NewQuery()
+
+	for k, v := range r.Form {
+		v0 := v[0]
+		switch k {
+		case "repository":
+			q.Repository(v0)
+		case "tag":
+			q.Tag(v0)
+		case "os":
+			q.OS(v0)
+		case "arch":
+			q.Arch(v0)
+		default:
+			is_annotation := false
+			if strings.HasPrefix(k, "annotation:") {
+				k = strings.TrimPrefix(k, "annotation:")
+				is_annotation = true
+			} else if strings.HasPrefix(k, "label:") {
+				is_annotation = true
+			}
+			if is_annotation {
+				if strings.HasSuffix(k, ":exists") {
+					k = strings.TrimSuffix(k, ":exists")
+					switch strings.ToLower(v0) {
+					case "true", "1":
+						q.AnnotationExists(k)
+					}
+				} else {
+					q.AnnotationIs(k, v0)
+				}
+			}
+		}
+	}
+
 	ctx := context.Background()
-	results, err := ih.db.DoQuery(ctx, NewQuery())
+	results, err := ih.db.DoQuery(ctx, q)
 	if err != nil {
 		internalError(w, err)
 		return
