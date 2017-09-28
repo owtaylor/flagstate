@@ -15,6 +15,17 @@ type indexHandler struct {
 }
 
 func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Registry string
+		Results  []*Repository
+	}
+
+	if ih.config.Registry.PublicUrl != "" {
+		body.Registry = ih.config.Registry.PublicUrl
+	} else {
+		body.Registry = ih.config.Registry.Url
+	}
+
 	SetCacheControl(w, ih.config.Cache.MaxAgeIndex.Value, ih.dynamic)
 	if CheckAndSetETag(ih.db, w, r) {
 		return
@@ -57,7 +68,9 @@ func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	results, err := ih.db.DoQuery(ctx, q)
+
+	var err error
+	body.Results, err = ih.db.DoQuery(ctx, q)
 	if err != nil {
 		internalError(w, err)
 		return
@@ -67,7 +80,7 @@ func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	encoder := json.NewEncoder(w)
-	err = encoder.Encode(results)
+	err = encoder.Encode(body)
 	if err != nil {
 		log.Print(err)
 	}

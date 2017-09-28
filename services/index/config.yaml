@@ -1,5 +1,6 @@
 registry:
     url: http://registry:5000
+    public_url: /
 events:
     token: "OPEN_SESAME"
 database:

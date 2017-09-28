@@ -27,7 +27,8 @@ func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 type Config struct {
 	Registry struct {
-		Url string
+		Url       string
+		PublicUrl string `yaml:"public_url"`
 	}
 	Events struct {
 		Token string

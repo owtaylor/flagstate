@@ -40,6 +40,9 @@ Configuration is done by a yaml file:
 ``` yaml
 registry:
     url: https://registry.example.com
+	# This is an URL to the registry that will be returned in request bodies. It can be
+	# an absolute URL, or a relative URL with a full path. Defaults to the value of url.
+	public_url: /
 events:
 	# If set to an non-empty value, a 'Authorization: Bearer <token>' must be
 	# present for webhook notification posts to the /events endpoint
