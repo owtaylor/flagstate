@@ -34,8 +34,18 @@ func ParseIfMatch(input string) ([]string, error) {
 	return result, nil
 }
 
-func SetCacheControl(w http.ResponseWriter, maxAge time.Duration) {
-	value := fmt.Sprintf("max-age=%v", int(0.5+maxAge.Seconds()))
+func SetCacheControl(w http.ResponseWriter, maxAge time.Duration, dynamic bool) {
+	var value string
+	if dynamic {
+		// This may be too drastic - it could turn out that the same
+		// "dynamic" queries are being made over and over again, and
+		// caching is useful. We could make setting this configurable
+		// and let front-ends determine if they want to use different
+		// policies for /index/dynamic and /index/static.
+		value = "no-store"
+	} else {
+		value = fmt.Sprintf("max-age=%v", int(0.5+maxAge.Seconds()))
+	}
 	w.Header().Set("Cache-Control", value)
 }
 

@@ -9,12 +9,13 @@ import (
 )
 
 type indexHandler struct {
-	config *Config
-	db     Database
+	config  *Config
+	db      Database
+	dynamic bool
 }
 
 func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	SetCacheControl(w, ih.config.Cache.MaxAgeIndex.Value)
+	SetCacheControl(w, ih.config.Cache.MaxAgeIndex.Value, ih.dynamic)
 	if CheckAndSetETag(ih.db, w, r) {
 		return
 	}

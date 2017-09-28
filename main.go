@@ -76,9 +76,14 @@ func main() {
 		db:      db,
 		changes: changes,
 	})
-	http.Handle("/index", &indexHandler{
+	http.Handle("/index/static", &indexHandler{
 		config: config,
 		db:     db,
+	})
+	http.Handle("/index/dynamic", &indexHandler{
+		config:  config,
+		db:      db,
+		dynamic: true,
 	})
 	http.Handle("/", &homeHandler{
 		config: config,

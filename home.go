@@ -23,7 +23,7 @@ func init() {
 }
 
 func (hh *homeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	SetCacheControl(w, hh.config.Cache.MaxAgeHtml.Value)
+	SetCacheControl(w, hh.config.Cache.MaxAgeHtml.Value, false)
 	if CheckAndSetETag(hh.db, w, r) {
 		return
 	}
