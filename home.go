@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -9,12 +10,14 @@ import (
 
 type homeHandler struct {
 	db       Database
+	maxAge   int
 	template *template.Template
 }
 
-func NewHomeHandler(db Database) http.Handler {
+func NewHomeHandler(config *Config, db Database) http.Handler {
 	hh := &homeHandler{
-		db: db,
+		db:     db,
+		maxAge: int(0.5 + config.Cache.MaxAgeHtml.Value.Seconds()),
 	}
 
 	var err error
@@ -27,6 +30,7 @@ func NewHomeHandler(db Database) http.Handler {
 }
 
 func (hh *homeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", hh.maxAge))
 	if CheckAndSetETag(hh.db, w, r) {
 		return
 	}

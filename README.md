@@ -52,6 +52,11 @@ database:
 		# Login information can also be passed inthe normal fashion via
 		# PGUSER/PGPASSWORD/PGPASSFILE environment variables.
         url: postgres://<username>:<password>@<host>:<port>/<database>?sslmode=disable
+cache:
+	# Cache-Control: max-age=<> for programmatic queries
+	max_age_index: 5s
+	# Cache-Control: max-age=<> for the HTML user interface
+	max_age_html: 5s
 interval:
 	# How frequently a global scan of the registry is done. 0 for never.
     fetch_all: 1h

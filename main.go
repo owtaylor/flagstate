@@ -27,17 +27,9 @@ func badRequest(w http.ResponseWriter, err error) {
 }
 
 func startTimers(config *Config, fetcher *Fetcher) {
-	fetchAllInterval, err := time.ParseDuration(config.Interval.FetchAll)
-	if err != nil {
-		log.Fatalf("Can't parse interval.fetch_all (%s) as a duration: %s", config.Interval.FetchAll, err)
-	}
-	gcInterval, err := time.ParseDuration(config.Interval.GarbageCollect)
-	if err != nil {
-		log.Fatalf("Can't parse interval.garbage_collect (%s) as a duration: %s", config.Interval.GarbageCollect, err)
-	}
 	go func() {
-		fetchAllTicker := time.Tick(fetchAllInterval)
-		gcTicker := time.Tick(gcInterval)
+		fetchAllTicker := time.Tick(config.Interval.FetchAll.Value)
+		gcTicker := time.Tick(config.Interval.GarbageCollect.Value)
 
 		for true {
 			select {
@@ -78,8 +70,8 @@ func main() {
 
 	http.Handle("/events", NewEventHandler(config, fetcher))
 	http.Handle("/assert", NewAssertHandler(db, changes))
-	http.Handle("/index", NewIndexHandler(db))
-	http.Handle("/", NewHomeHandler(db))
+	http.Handle("/index", NewIndexHandler(config, db))
+	http.Handle("/", NewHomeHandler(config, db))
 
 	log.Printf("metastore: %s", BuildString)
 	log.Fatal(http.ListenAndServe(":8088", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)))

@@ -5,6 +5,9 @@ events:
 database:
     postgres:
         url: postgres://metastore:mypassword@db:5432/metastore?sslmode=disable
+cache:
+    max_age_index: 1s
+    max_age_html: 1s
 interval:
     fetch_all: 1h
     garbage_collect: 30m

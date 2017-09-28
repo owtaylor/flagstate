@@ -3,7 +3,27 @@ package main
 import (
 	"github.com/go-yaml/yaml"
 	"io/ioutil"
+	"time"
 )
+
+type Duration struct {
+	Value time.Duration
+}
+
+func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	if err := unmarshal(&s); err != nil {
+		return err
+	}
+
+	parsed, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+
+	d.Value = parsed
+	return nil
+}
 
 type Config struct {
 	Registry struct {
@@ -17,9 +37,13 @@ type Config struct {
 			Url string
 		}
 	}
+	Cache struct {
+		MaxAgeIndex Duration `yaml:"max_age_index"`
+		MaxAgeHtml  Duration `yaml:"max_age_html"`
+	}
 	Interval struct {
-		FetchAll       string `yaml:"fetch_all"`
-		GarbageCollect string `yaml:"garbage_collect"`
+		FetchAll       Duration `yaml:"fetch_all"`
+		GarbageCollect Duration `yaml:"garbage_collect"`
 	}
 }
 

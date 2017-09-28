@@ -3,22 +3,26 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 )
 
 type indexHandler struct {
-	db Database
+	db     Database
+	maxAge int
 }
 
-func NewIndexHandler(db Database) http.Handler {
+func NewIndexHandler(config *Config, db Database) http.Handler {
 	return &indexHandler{
-		db: db,
+		db:     db,
+		maxAge: int(0.5 + config.Cache.MaxAgeIndex.Value.Seconds()),
 	}
 }
 
 func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", ih.maxAge))
 	if CheckAndSetETag(ih.db, w, r) {
 		return
 	}
