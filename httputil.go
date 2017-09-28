@@ -34,6 +34,11 @@ func ParseIfMatch(input string) ([]string, error) {
 	return result, nil
 }
 
+func SetCacheControl(w http.ResponseWriter, maxAge time.Duration) {
+	value := fmt.Sprintf("max-age=%v", int(0.5+maxAge.Seconds()))
+	w.Header().Set("Cache-Control", value)
+}
+
 func CheckAndSetETag(db Database, w http.ResponseWriter, r *http.Request) bool {
 	modificationTime, err := db.ModificationTime()
 	if err != nil {

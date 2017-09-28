@@ -13,13 +13,6 @@ type eventHandler struct {
 	fetcher *Fetcher
 }
 
-func NewEventHandler(config *Config, fetcher *Fetcher) http.Handler {
-	return &eventHandler{
-		config:  config,
-		fetcher: fetcher,
-	}
-}
-
 func (eh *eventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		X      int

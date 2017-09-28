@@ -29,13 +29,6 @@ type assertHandler struct {
 	changes *ChangeBroadcaster
 }
 
-func NewAssertHandler(db Database, changes *ChangeBroadcaster) http.Handler {
-	return &assertHandler{
-		db:      db,
-		changes: changes,
-	}
-}
-
 func jsonContains(a interface{}, b interface{}) bool {
 	switch a_v := a.(type) {
 	case map[string]interface{}:

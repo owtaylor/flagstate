@@ -68,10 +68,22 @@ func main() {
 	fetcher.FetchAll()
 	startTimers(config, fetcher)
 
-	http.Handle("/events", NewEventHandler(config, fetcher))
-	http.Handle("/assert", NewAssertHandler(db, changes))
-	http.Handle("/index", NewIndexHandler(config, db))
-	http.Handle("/", NewHomeHandler(config, db))
+	http.Handle("/events", &eventHandler{
+		config:  config,
+		fetcher: fetcher,
+	})
+	http.Handle("/assert", &assertHandler{
+		db:      db,
+		changes: changes,
+	})
+	http.Handle("/index", &indexHandler{
+		config: config,
+		db:     db,
+	})
+	http.Handle("/", &homeHandler{
+		config: config,
+		db:     db,
+	})
 
 	log.Printf("metastore: %s", BuildString)
 	log.Fatal(http.ListenAndServe(":8088", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)))
