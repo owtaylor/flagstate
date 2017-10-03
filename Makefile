@@ -33,6 +33,22 @@ untrust-local:
 	sudo sh -c 'rm /etc/pki/ca-trust/source/anchors/metastore.crt && update-ca-trust'
 	sudo sh -c 'sed -i /registry.local.fishsoup.net/d /etc/hosts'
 
+MARKDOWN=					\
+	README.md				\
+	docs/protocol.md
+
+docs:
+	@mkdir -p html ; \
+	for m in $(MARKDOWN) ; do \
+		out=html/`basename $${m%.md}`.html ; \
+		echo "Generating $$out" ; \
+		( echo '<!DOCTYPE html><html><head><link rel="stylesheet" type="text/css" href="codehilite.css"></head><body>' && \
+		  markdown_py-3 -x codehilite  -x partial_gfm -o html5 $$m && \
+		  echo '</body>' \
+		) > $$out.tmp && \
+		    mv $$out.tmp $$out || rm -f $$out.tmp ; \
+	done
+
 README.html: README.md codehilite.css Makefile
 	( echo '<!DOCTYPE html><html><head><link rel="stylesheet" type="text/css" href="codehilite.css"></head><body>' && \
 	  markdown_py-3 -x codehilite  -x partial_gfm -o html5 $< && \
@@ -43,5 +59,5 @@ README.html: README.md codehilite.css Makefile
 codehilite.css:
 	pygmentize -S default -f html > codehilite.css
 
-.PHONY: binary test coverage reset-local trust-local untrust-local
+.PHONY: binary test docs coverage reset-local trust-local untrust-local
 
