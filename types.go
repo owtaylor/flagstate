@@ -36,9 +36,9 @@ type Repository struct {
 }
 
 func (im *Image) Title() string {
-	if v := im.Annotations["org.opencontainers.image.title "]; v != "" {
+	if v := im.Annotations["org.opencontainers.image.title"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:org.label-schema.name "]; v != "" {
+	} else if v := im.Annotations["label:org.label-schema.name"]; v != "" {
 		return v
 	} else if v := im.Annotations["label:io.k8s.display-name"]; v != "" {
 		return v
@@ -51,13 +51,15 @@ func (im *Image) Title() string {
 	}
 }
 func (im *Image) Description() string {
-	if v := im.Annotations["org.opencontainers.image.description "]; v != "" {
+	if v := im.Annotations["org.opencontainers.image.description"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:org.label-schema.description "]; v != "" {
+	} else if v := im.Annotations["label:org.label-schema.description"]; v != "" {
 		return v
 	} else if v := im.Annotations["label:io.k8s.description"]; v != "" {
 		return v
 	} else if v := im.Annotations["label:description"]; v != "" {
+		return v
+	} else if v := im.Annotations["label:Description"]; v != "" {
 		return v
 	} else {
 		return ""
