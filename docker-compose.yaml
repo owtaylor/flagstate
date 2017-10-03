@@ -24,7 +24,7 @@ services:
             - 7000:5000
         volumes:
             - registry:/var/lib/registry:z
-            - ./services/registry/config.yml:/etc/docker/registry/config.yml:ro
+            - ./services/registry/config.yml:/etc/docker/registry/config.yml:z
 
     index:
         build: .
@@ -38,5 +38,5 @@ services:
             - 7080:80
             - 7443:443
         volumes:
-            - ${TEST_DATA:-./test-data}:/mnt/test-data:ro
+            - ${TEST_DATA:-./test-data}:/mnt/test-data:z
             - tls:/etc/pki/tls:z
