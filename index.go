@@ -56,8 +56,7 @@ func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if is_annotation {
 				if strings.HasSuffix(k, ":exists") {
 					k = strings.TrimSuffix(k, ":exists")
-					switch strings.ToLower(v0) {
-					case "true", "1":
+					if v0 == "1" {
 						q.AnnotationExists(k)
 					}
 				} else {
