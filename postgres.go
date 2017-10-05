@@ -9,7 +9,6 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"sort"
-	"strconv"
 	"time"
 )
 
@@ -106,46 +105,6 @@ func (ptx postgresTransaction) exec(query string, args ...interface{}) (sql.Resu
 	}
 
 	return res, err
-}
-
-func makeWhereClause(query *Query) (clause string, args []interface{}) {
-	clause = ` WHERE 1 = 1`
-	args = make([]interface{}, 0, 20)
-
-	if query.repository != "" {
-		args = append(args, query.repository)
-		clause += ` AND t.repository = $` + strconv.Itoa(len(args))
-	}
-
-	if query.tag != "" {
-		args = append(args, query.tag)
-		clause += ` AND t.tag = $` + strconv.Itoa(len(args))
-	}
-
-	if query.os != "" {
-		args = append(args, query.os)
-		clause += ` AND i.os = $` + strconv.Itoa(len(args))
-	}
-
-	if query.arch != "" {
-		args = append(args, query.arch)
-		clause += ` AND i.arch = $` + strconv.Itoa(len(args))
-	}
-
-	for annotation, value := range query.annotations {
-		if value == "" {
-			args = append(args, annotation)
-			clause += ` AND i.annotations ? $` + strconv.Itoa(len(args))
-		} else {
-			argJson, _ := json.Marshal(map[string]string{
-				annotation: value,
-			})
-			args = append(args, argJson)
-			clause += ` AND i.annotations @> $` + strconv.Itoa(len(args))
-		}
-	}
-
-	return
 }
 
 func getAnnotations(annotationsJson string) (map[string]string, error) {

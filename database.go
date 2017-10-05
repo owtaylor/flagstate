@@ -6,47 +6,73 @@ import (
 	"time"
 )
 
+type QueryType int
+
+const (
+	QueryIs = iota
+	QueryExists
+	QueryMatches
+)
+
+type QueryTerm struct {
+	queryType QueryType
+	argument  string
+}
+
 type Query struct {
-	repository  string
-	tag         string
-	os          string
-	arch        string
-	annotations map[string]string
+	repository  []QueryTerm
+	tag         []QueryTerm
+	os          []QueryTerm
+	arch        []QueryTerm
+	annotations map[string][]QueryTerm
 }
 
 func NewQuery() *Query {
 	return &Query{
-		annotations: make(map[string]string),
+		annotations: make(map[string][]QueryTerm),
 	}
 }
 
 func (q *Query) Repository(repository string) *Query {
-	q.repository = repository
+	q.repository = append(q.repository, QueryTerm{QueryIs, repository})
 	return q
 }
 
 func (q *Query) Tag(tag string) *Query {
-	q.tag = tag
+	q.tag = append(q.tag, QueryTerm{QueryIs, tag})
+	return q
+}
+
+func (q *Query) TagMatches(tag string) *Query {
+	q.tag = append(q.tag, QueryTerm{QueryMatches, tag})
 	return q
 }
 
 func (q *Query) OS(os string) *Query {
-	q.os = os
+	q.os = append(q.os, QueryTerm{QueryIs, os})
 	return q
 }
 
 func (q *Query) Arch(arch string) *Query {
-	q.arch = arch
+	q.arch = append(q.arch, QueryTerm{QueryIs, arch})
 	return q
 }
 
 func (q *Query) AnnotationExists(annotation string) *Query {
-	q.annotations[annotation] = ""
+	q.annotations[annotation] = append(q.annotations[annotation],
+		QueryTerm{QueryExists, ""})
 	return q
 }
 
 func (q *Query) AnnotationIs(annotation string, value string) *Query {
-	q.annotations[annotation] = value
+	q.annotations[annotation] = append(q.annotations[annotation],
+		QueryTerm{QueryIs, value})
+	return q
+}
+
+func (q *Query) AnnotationMatches(annotation string, pattern string) *Query {
+	q.annotations[annotation] = append(q.annotations[annotation],
+		QueryTerm{QueryMatches, pattern})
 	return q
 }
 
