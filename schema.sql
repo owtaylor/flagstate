@@ -23,6 +23,7 @@ CREATE UNIQUE INDEX image_tag_pkey ON image_tag ( repository, tag );
 
 CREATE TABLE list (
        digest text PRIMARY KEY,
+       media_type text,
        annotations jsonb
 );
 CREATE INDEX list_annotations ON list USING gin(annotations);

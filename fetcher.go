@@ -297,6 +297,7 @@ func (f *Fetcher) fetchImageList(op *fetchOperation, dgst digest.Digest, list *I
 
 	switch v := mfst.(type) {
 	case *manifestlist.DeserializedManifestList:
+		list.MediaType = v.MediaType
 		for _, descriptor := range v.Manifests {
 			var image Image
 			err := f.fetchImage(op, descriptor.Digest, &image)

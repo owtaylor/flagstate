@@ -192,7 +192,7 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
-	listQuery := `SELECT i.media_type, i.digest, i.os, i.arch, i.annotations, t.repository, t.tag, l.digest, l.annotations FROM image i ` +
+	listQuery := `SELECT i.media_type, i.digest, i.os, i.arch, i.annotations, t.repository, t.tag, l.digest, l.media_type, l.annotations FROM image i ` +
 		`JOIN list_entry e on e.image = i.digest ` +
 		`JOIN list_tag t on t.list = e.list ` +
 		`JOIN list l on e.list = l.digest ` +
@@ -217,9 +217,10 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 		var repository string
 		var tag string
 		var listDigest digest.Digest
+		var listMediaType string
 		var listAnnotationsJson string
 
-		err = rows.Scan(&mediaType, &imageDigest, &os, &arch, &imageAnnotationsJson, &repository, &tag, &listDigest, &listAnnotationsJson)
+		err = rows.Scan(&mediaType, &imageDigest, &os, &arch, &imageAnnotationsJson, &repository, &tag, &listDigest, &listMediaType, &listAnnotationsJson)
 		if err != nil {
 			return make([]*Repository, 0), err
 		}
@@ -244,6 +245,7 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 			currentList = &TaggedImageList{
 				ImageList: ImageList{
 					Digest:      listDigest,
+					MediaType:   listMediaType,
 					Annotations: listAnnotations,
 				},
 				Tags: make([]string, 0),
@@ -408,9 +410,9 @@ func (ptx postgresTransaction) storeImageList(repository string, list *ImageList
 	log.Printf("Storing list %s/%s", repository, list.Digest)
 	annotationsJson, _ := json.Marshal(list.Annotations)
 	res, err := ptx.exec(
-		`INSERT INTO list (digest, annotations) `+
-			`VALUES ($1, $2) ON CONFLICT (digest) DO NOTHING `,
-		list.Digest, annotationsJson)
+		`INSERT INTO list (digest, media_type, annotations) `+
+			`VALUES ($1, $2, $3) ON CONFLICT (digest) DO NOTHING `,
+		list.Digest, list.MediaType, annotationsJson)
 	if err != nil {
 		return err
 	}
