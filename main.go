@@ -72,10 +72,12 @@ func main() {
 		config:  config,
 		fetcher: fetcher,
 	})
-	http.Handle("/assert", &assertHandler{
-		db:      db,
-		changes: changes,
-	})
+	if config.Components.AssertEndpoint {
+		http.Handle("/assert", &assertHandler{
+			db:      db,
+			changes: changes,
+		})
+	}
 	http.Handle("/index/static", &indexHandler{
 		config: config,
 		db:     db,
@@ -85,10 +87,12 @@ func main() {
 		db:      db,
 		dynamic: true,
 	})
-	http.Handle("/", &homeHandler{
-		config: config,
-		db:     db,
-	})
+	if config.Components.WebUI {
+		http.Handle("/", &homeHandler{
+			config: config,
+			db:     db,
+		})
+	}
 
 	log.Printf("metastore: %s", BuildString)
 	log.Fatal(http.ListenAndServe(":8088", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)))

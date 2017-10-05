@@ -30,6 +30,10 @@ type Config struct {
 		Url       string
 		PublicUrl string `yaml:"public_url"`
 	}
+	Components struct {
+		WebUI          bool `yaml:"web_ui"`
+		AssertEndpoint bool `yaml:"assert_endpoint"`
+	}
 	Events struct {
 		Token string
 	}

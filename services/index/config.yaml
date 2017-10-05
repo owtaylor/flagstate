@@ -1,6 +1,9 @@
 registry:
     url: http://registry:5000
     public_url: /
+components:
+    web_ui: true
+    assert_endpoint: true
 events:
     token: "OPEN_SESAME"
 database:

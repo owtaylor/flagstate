@@ -43,6 +43,11 @@ registry:
 	# This is an URL to the registry that will be returned in request bodies. It can be
 	# an absolute URL, or a relative URL with a full path. Defaults to the value of url.
 	public_url: /
+components:
+    # If true, a basic web user interface will be provided at /
+    web_ui: true
+    # If true, an interface for programmatic testing will be enabled at /assert
+    assert_endpoint: false
 events:
 	# If set to an non-empty value, a 'Authorization: Bearer <token>' must be
 	# present for webhook notification posts to the /events endpoint
