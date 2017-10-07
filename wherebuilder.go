@@ -97,15 +97,15 @@ func (wb *whereBuilder) makeAnnotationSubclause(annotation string, terms []Query
 	for _, term := range terms {
 		switch term.queryType {
 		case QueryIs:
-			wb.addPiece(`i.annotations ? ` + wb.addArg(annotation))
+			wb.addPiece(`i.Annotations ? ` + wb.addArg(annotation))
 		case QueryMatches:
-			wb.addPiece(`jsonb_object_field_text(i.annotations, ` + wb.addArg(annotation) + `) ` +
+			wb.addPiece(`jsonb_object_field_text(i.Annotations, ` + wb.addArg(annotation) + `) ` +
 				`like ` + wb.addArg(likePattern(term.argument)))
 		case QueryExists:
 			argJson, _ := json.Marshal(map[string]string{
 				annotation: term.argument,
 			})
-			wb.addPiece(`i.annotations @> ` + wb.addArg(string(argJson)))
+			wb.addPiece(`i.Annotations @> ` + wb.addArg(string(argJson)))
 		}
 	}
 	wb.addPiece("")
@@ -118,19 +118,19 @@ func makeWhereClause(query *Query) (clause string, args []interface{}) {
 	}
 
 	if len(query.repository) > 0 {
-		wb.makeWhereSubclause(`t.repository`, query.repository)
+		wb.makeWhereSubclause(`t.Repository`, query.repository)
 	}
 
 	if len(query.tag) > 0 {
-		wb.makeWhereSubclause(`t.tag`, query.tag)
+		wb.makeWhereSubclause(`t.Tag`, query.tag)
 	}
 
 	if len(query.os) > 0 {
-		wb.makeWhereSubclause(`i.os`, query.os)
+		wb.makeWhereSubclause(`i.OS`, query.os)
 	}
 
 	if len(query.arch) > 0 {
-		wb.makeWhereSubclause(`i.arch`, query.arch)
+		wb.makeWhereSubclause(`i.Arch`, query.arch)
 	}
 
 	for annotation, terms := range query.annotations {

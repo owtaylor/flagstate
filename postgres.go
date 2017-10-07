@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"github.com/docker/distribution/digest"
 	_ "github.com/lib/pq"
 	"log"
@@ -63,14 +62,14 @@ func (pdb *postgresDatabase) DoQuery(ctx context.Context, query *Query) ([]*Repo
 func (pdb *postgresDatabase) ModificationTime() (time.Time, error) {
 	var t time.Time
 	err := pdb.db.QueryRow(
-		`SELECT modification_time FROM modification`).Scan(&t)
+		`SELECT ModificationTime FROM modification`).Scan(&t)
 	return t, err
 }
 
 func (ptx postgresTransaction) Commit() error {
 	if ptx.modify {
 		err := ptx.tx.QueryRow(
-			`UPDATE modification SET modification_time = now() RETURNING modification_time`).Scan(&ptx.modificationTime)
+			`UPDATE modification SET ModificationTime = now() RETURNING ModificationTime`).Scan(&ptx.modificationTime)
 		if err != nil {
 			ptx.tx.Rollback()
 			return err
@@ -107,31 +106,13 @@ func (ptx postgresTransaction) exec(query string, args ...interface{}) (sql.Resu
 	return res, err
 }
 
-func getAnnotations(annotationsJson string) (map[string]string, error) {
-	annotations := make(map[string]string)
-	var unmarshaled map[string]interface{}
-	err := json.Unmarshal([]byte(annotationsJson), &unmarshaled)
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range unmarshaled {
-		vString, ok := v.(string)
-		if !ok {
-			return nil, fmt.Errorf("Bad annotation value %v: %v", k, v)
-		}
-		annotations[k] = vString
-	}
-
-	return annotations, nil
-}
-
 func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
-	imageQuery := `SELECT i.media_type, i.digest, i.os, i.arch, i.annotations, t.repository, t.tag FROM image i ` +
-		`JOIN image_tag t on t.image = i.digest ` +
+	imageQuery := `SELECT i.MediaType, i.Digest, i.OS, i.Arch, i.Annotations, t.Repository, t.Tag FROM image i ` +
+		`JOIN imageTag t on t.Image = i.Digest ` +
 		whereClause +
-		` ORDER BY (t.repository, i.digest)`
+		` ORDER BY (t.Repository, i.Digest)`
 
 	rows, err := ptx.tx.Query(imageQuery, args...)
 	if err != nil {
@@ -146,7 +127,7 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 		var imageDigest digest.Digest
 		var os string
 		var arch string
-		var imageAnnotationsJson string
+		var imageAnnotationsJson []byte
 		var repository string
 		var tag string
 
@@ -164,21 +145,19 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 			currentImage = nil
 		}
 		if currentImage == nil || imageDigest != currentImage.Digest {
-			imageAnnotations, err := getAnnotations(imageAnnotationsJson)
+			currentImage = &TaggedImage{
+				Image: Image{
+					Digest:    imageDigest,
+					MediaType: mediaType,
+					OS:        os,
+					Arch:      arch,
+				},
+				Tags: make([]string, 0),
+			}
+			err = json.Unmarshal(imageAnnotationsJson, &currentImage.Annotations)
 			if err != nil {
 				log.Print(err)
 				continue
-			}
-
-			currentImage = &TaggedImage{
-				Image: Image{
-					Digest:      imageDigest,
-					MediaType:   mediaType,
-					OS:          os,
-					Arch:        arch,
-					Annotations: imageAnnotations,
-				},
-				Tags: make([]string, 0),
 			}
 			currentRepository.Images = append(currentRepository.Images, currentImage)
 		}
@@ -192,12 +171,12 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
-	listQuery := `SELECT i.media_type, i.digest, i.os, i.arch, i.annotations, t.repository, t.tag, l.digest, l.media_type, l.annotations FROM image i ` +
-		`JOIN list_entry e on e.image = i.digest ` +
-		`JOIN list_tag t on t.list = e.list ` +
-		`JOIN list l on e.list = l.digest ` +
+	listQuery := `SELECT i.MediaType, i.Digest, i.OS, i.Arch, i.Annotations, t.Repository, t.Tag, l.Digest, l.MediaType, l.Annotations FROM image i ` +
+		`JOIN listEntry e on e.Image = i.Digest ` +
+		`JOIN listTag t on t.List = e.List ` +
+		`JOIN list l on e.List = l.Digest ` +
 		whereClause +
-		` ORDER BY (t.repository, l.digest, i.digest)`
+		` ORDER BY (t.Repository, l.Digest, i.Digest)`
 
 	rows, err := ptx.tx.Query(listQuery, args...)
 	if err != nil {
@@ -213,12 +192,12 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 		var imageDigest digest.Digest
 		var os string
 		var arch string
-		var imageAnnotationsJson string
+		var imageAnnotationsJson []byte
 		var repository string
 		var tag string
 		var listDigest digest.Digest
 		var listMediaType string
-		var listAnnotationsJson string
+		var listAnnotationsJson []byte
 
 		err = rows.Scan(&mediaType, &imageDigest, &os, &arch, &imageAnnotationsJson, &repository, &tag, &listDigest, &listMediaType, &listAnnotationsJson)
 		if err != nil {
@@ -236,37 +215,34 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 			currentImage = nil
 		}
 		if currentList == nil || listDigest != currentList.Digest {
-			listAnnotations, err := getAnnotations(listAnnotationsJson)
+			currentList = &TaggedImageList{
+				ImageList: ImageList{
+					Digest:    listDigest,
+					MediaType: listMediaType,
+				},
+				Tags: make([]string, 0),
+			}
+			err = json.Unmarshal(listAnnotationsJson, &currentList.Annotations)
 			if err != nil {
 				log.Print(err)
 				continue
-			}
-
-			currentList = &TaggedImageList{
-				ImageList: ImageList{
-					Digest:      listDigest,
-					MediaType:   listMediaType,
-					Annotations: listAnnotations,
-				},
-				Tags: make([]string, 0),
 			}
 			currentRepository.Lists = append(currentRepository.Lists, currentList)
 			currentImage = nil
 		}
 		if currentImage == nil || imageDigest != currentImage.Digest {
-			imageAnnotations, err := getAnnotations(imageAnnotationsJson)
+			currentImage = &Image{
+				Digest:    imageDigest,
+				MediaType: mediaType,
+				OS:        os,
+				Arch:      arch,
+			}
+			err = json.Unmarshal(imageAnnotationsJson, &currentImage.Annotations)
 			if err != nil {
 				log.Print(err)
 				continue
 			}
 
-			currentImage = &Image{
-				Digest:      imageDigest,
-				MediaType:   mediaType,
-				OS:          os,
-				Arch:        arch,
-				Annotations: imageAnnotations,
-			}
 			currentList.Images = append(currentList.Images, currentImage)
 		}
 		if len(currentList.Images) == 1 {
@@ -327,7 +303,7 @@ func (ptx postgresTransaction) DoQuery(query *Query) ([]*Repository, error) {
 
 func (ptx postgresTransaction) getTags(repository string, target string, dgst digest.Digest) (map[string]bool, error) {
 	rows, err := ptx.tx.Query(
-		`SELECT tag FROM `+target+`_tag WHERE `+target+` = $1 `,
+		`SELECT Tag FROM `+target+`Tag WHERE `+target+` = $1 `,
 		dgst)
 	if err != nil {
 		return nil, err
@@ -346,7 +322,7 @@ func (ptx postgresTransaction) getTags(repository string, target string, dgst di
 	return result, nil
 }
 
-func (ptx postgresTransaction) setTags(repository string, target string, dgst digest.Digest, tags []string) error {
+func (ptx postgresTransaction) setTags(repository string, target string, targetUpper string, dgst digest.Digest, tags []string) error {
 	log.Printf("Setting tags for %s %s/%s: %s", target, repository, dgst, tags)
 	oldTags, err := ptx.getTags(repository, target, dgst)
 	if err != nil {
@@ -356,9 +332,9 @@ func (ptx postgresTransaction) setTags(repository string, target string, dgst di
 	for _, tag := range tags {
 		delete(oldTags, tag)
 		_, err := ptx.exec(
-			`INSERT INTO `+target+`_tag (repository, tag, `+target+` ) `+
+			`INSERT INTO `+target+`Tag (Repository, Tag, `+targetUpper+` ) `+
 				`VALUES ($1, $2, $3) `+
-				`ON CONFLICT (repository, tag) DO UPDATE SET `+target+` = $3 `,
+				`ON CONFLICT (Repository, Tag) DO UPDATE SET `+targetUpper+` = $3 `,
 			repository, tag, dgst)
 
 		if err != nil {
@@ -368,8 +344,8 @@ func (ptx postgresTransaction) setTags(repository string, target string, dgst di
 
 	for tag := range oldTags {
 		_, err := ptx.exec(
-			`DELETE FROM `+target+`_tag `+
-				`WHERE repository = $1 AND tag = $2 AND `+target+` = $3 `,
+			`DELETE FROM `+target+`Tag `+
+				`WHERE Repository = $1 AND Tag = $2 AND `+targetUpper+` = $3 `,
 			repository, tag, dgst)
 		if err != nil {
 			return err
@@ -380,18 +356,18 @@ func (ptx postgresTransaction) setTags(repository string, target string, dgst di
 }
 
 func (ptx postgresTransaction) SetImageTags(repository string, dgst digest.Digest, tags []string) error {
-	return ptx.setTags(repository, "image", dgst, tags)
+	return ptx.setTags(repository, "image", "Image", dgst, tags)
 }
 
 func (ptx postgresTransaction) SetImageListTags(repository string, dgst digest.Digest, tags []string) error {
-	return ptx.setTags(repository, "list", dgst, tags)
+	return ptx.setTags(repository, "list", "List", dgst, tags)
 }
 
 func (ptx postgresTransaction) storeImage(repository string, image *Image) error {
 	log.Printf("Storing image %s/%s", repository, image.Digest)
 	annotationsJson, _ := json.Marshal(image.Annotations)
 	_, err := ptx.exec(
-		`INSERT INTO image (digest, media_type, arch, os, annotations) `+
+		`INSERT INTO image (Digest, MediaType, Arch, OS, Annotations) `+
 			`VALUES ($1, $2, $3, $4, $5) ON CONFLICT (digest) DO NOTHING `,
 		image.Digest, image.MediaType, image.Arch, image.OS, annotationsJson)
 	return err
@@ -410,8 +386,8 @@ func (ptx postgresTransaction) storeImageList(repository string, list *ImageList
 	log.Printf("Storing list %s/%s", repository, list.Digest)
 	annotationsJson, _ := json.Marshal(list.Annotations)
 	res, err := ptx.exec(
-		`INSERT INTO list (digest, media_type, annotations) `+
-			`VALUES ($1, $2, $3) ON CONFLICT (digest) DO NOTHING `,
+		`INSERT INTO list (Digest, MediaType, Annotations) `+
+			`VALUES ($1, $2, $3) ON CONFLICT (Digest) DO NOTHING `,
 		list.Digest, list.MediaType, annotationsJson)
 	if err != nil {
 		return err
@@ -431,8 +407,8 @@ func (ptx postgresTransaction) storeImageList(repository string, list *ImageList
 		}
 
 		_, err := ptx.exec(
-			`INSERT INTO list_entry (list, image) `+
-				`VALUES ($1, $2) ON CONFLICT (list, image) DO NOTHING `,
+			`INSERT INTO listEntry (List, Image) `+
+				`VALUES ($1, $2) ON CONFLICT (List, Image) DO NOTHING `,
 			list.Digest, image.Digest)
 		if err != nil {
 			return err
@@ -454,7 +430,7 @@ func (ptx postgresTransaction) StoreImageList(repository string, list *TaggedIma
 func (ptx postgresTransaction) DeleteImage(repository string, dgst digest.Digest) error {
 	log.Printf("Deleting tags for image %s/%s", repository, dgst)
 	_, err := ptx.exec(
-		`DELETE FROM image_tag WHERE repository = $1 AND image = $2 `,
+		`DELETE FROM ImageTag WHERE Repository = $1 AND Image = $2 `,
 		repository, dgst)
 
 	return err
@@ -463,7 +439,7 @@ func (ptx postgresTransaction) DeleteImage(repository string, dgst digest.Digest
 func (ptx postgresTransaction) DeleteImageList(repository string, dgst digest.Digest) error {
 	log.Printf("Deleting tags for image_list %s/%s", repository, dgst)
 	_, err := ptx.exec(
-		`DELETE FROM list_tag WHERE repository = $1 AND list = $2 `,
+		`DELETE FROM listTag WHERE Repository = $1 AND List = $2 `,
 		repository, dgst)
 
 	return err
@@ -472,7 +448,7 @@ func (ptx postgresTransaction) DeleteImageList(repository string, dgst digest.Di
 func (ptx postgresTransaction) deleteMissingReposFromTable(table string, allRepos map[string]bool) error {
 	toDelete := make([]string, 0)
 
-	rows, err := ptx.tx.Query(`SELECT DISTINCT repository FROM ` + table)
+	rows, err := ptx.tx.Query(`SELECT DISTINCT Repository FROM ` + table)
 	if err != nil {
 		return err
 	}
@@ -489,7 +465,7 @@ func (ptx postgresTransaction) deleteMissingReposFromTable(table string, allRepo
 	}
 
 	for _, repo := range toDelete {
-		_, err := ptx.exec(`DELETE FROM `+table+`_tag WHERE repository = $1`,
+		_, err := ptx.exec(`DELETE FROM `+table+`Tag WHERE Repository = $1`,
 			repo)
 		if err != nil {
 			return err
@@ -500,11 +476,11 @@ func (ptx postgresTransaction) deleteMissingReposFromTable(table string, allRepo
 }
 
 func (ptx postgresTransaction) DeleteMissingRepos(allRepos map[string]bool) error {
-	err := ptx.deleteMissingReposFromTable("image_tag", allRepos)
+	err := ptx.deleteMissingReposFromTable("imageTag", allRepos)
 	if err != nil {
 		return err
 	}
-	err = ptx.deleteMissingReposFromTable("list_tag", allRepos)
+	err = ptx.deleteMissingReposFromTable("listTag", allRepos)
 	if err != nil {
 		return err
 	}
@@ -518,15 +494,15 @@ func (ptx postgresTransaction) DeleteUnused() error {
 
 	_, err := ptx.tx.Exec(
 		`DELETE FROM list ` +
-			`WHERE NOT EXISTS (SELECT * FROM list_tag WHERE list_tag.list = list.digest)`)
+			`WHERE NOT EXISTS (SELECT * FROM listTag WHERE listTag.List = list.Digest)`)
 	if err != nil {
 		return err
 	}
 
 	_, err = ptx.tx.Exec(
 		`DELETE FROM image ` +
-			`WHERE NOT EXISTS (SELECT * FROM image_tag WHERE image_tag.image = image.digest) ` +
-			`AND NOT EXISTS (SELECT * FROM list_entry WHERE list_entry.image = image.digest)`)
+			`WHERE NOT EXISTS (SELECT * FROM imageTag WHERE imageTag.Image = image.Digest) ` +
+			`AND NOT EXISTS (SELECT * FROM listEntry WHERE listEntry.Image = image.Digest)`)
 	if err != nil {
 		return err
 	}

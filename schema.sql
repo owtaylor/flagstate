@@ -1,42 +1,44 @@
-DROP TABLE IF EXISTS image, image_tag, list, list_tag, list_entry CASCADE;
+DROP TABLE IF EXISTS modification, image, imageTag, list, listTag, listEntry CASCADE;
 
 CREATE TABLE modification (
-       modification_time timestamp with time zone
+       ModificationTime timestamp with time zone
 );
 INSERT INTO modification VALUES (now());
 
 CREATE TABLE image (
-       digest text PRIMARY KEY,
-       media_type text,
-       arch text,
-       os text,
-       annotations jsonb
+       Digest text PRIMARY KEY,
+       MediaType text,
+       Arch text,
+       OS text,
+       Annotations jsonb
 );
-CREATE INDEX image_annotations ON image USING gin(annotations);
+CREATE INDEX imageAnnotations ON image USING gin(Annotations);
 
-CREATE TABLE image_tag (
-       repository text,
-       tag text,
-       image text REFERENCES image(digest)
+CREATE TABLE imageTag (
+       Repository text,
+       Tag text,
+       Image text REFERENCES image(Digest)
 );
-CREATE UNIQUE INDEX image_tag_pkey ON image_tag ( repository, tag );
+CREATE UNIQUE INDEX imageTagPKey ON imageTag ( Repository, Tag );
+CREATE INDEX imageTagTag ON imageTag ( Tag );
 
 CREATE TABLE list (
-       digest text PRIMARY KEY,
-       media_type text,
-       annotations jsonb
+       Digest text PRIMARY KEY,
+       MediaType text,
+       Annotations jsonb
 );
-CREATE INDEX list_annotations ON list USING gin(annotations);
+CREATE INDEX listAnnotations ON list USING gin(Annotations);
 
-CREATE TABLE list_tag (
-       repository text,
-       tag text,
-       list text REFERENCES list(digest)
+CREATE TABLE listTag (
+       Repository text,
+       Tag text,
+       List text REFERENCES list(Digest)
 );
-CREATE UNIQUE INDEX list_tag_pkey ON list_tag ( repository, tag );
+CREATE UNIQUE INDEX listTagPKey ON listTag ( Repository, Tag );
+CREATE INDEX listTagTag ON listTag ( Tag );
 
-CREATE TABLE list_entry (
-       list text REFERENCES list(digest) ON DELETE CASCADE,
-       image text REFERENCES image(digest)
+CREATE TABLE listEntry (
+       List text REFERENCES list(Digest) ON DELETE CASCADE,
+       Image text REFERENCES image(Digest)
 );
-CREATE UNIQUE INDEX list_entry_pkey ON list_entry ( list, image );
+CREATE UNIQUE INDEX listEntryPKey ON listEntry ( List, Image );

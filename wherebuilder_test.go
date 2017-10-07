@@ -58,32 +58,32 @@ func expectWhereClause(t *testing.T, query *Query, expected string, expectedArgs
 
 func TestMakeWhereClause(t *testing.T) {
 	expectWhereClause(t, NewQuery().Repository("foo/bar"),
-		" WHERE t.repository = $1",
+		" WHERE t.Repository = $1",
 		"foo/bar")
 	expectWhereClause(t, NewQuery().Tag("foo"),
-		" WHERE t.tag = $1",
+		" WHERE t.Tag = $1",
 		"foo")
 	expectWhereClause(t, NewQuery().OS("foo"),
-		" WHERE i.os = $1",
+		" WHERE i.OS = $1",
 		"foo")
-	expectWhereClause(t, NewQuery().Arch("foo"),
-		" WHERE i.arch = $1",
+	expectWhereClause(t, NewQuery().Architecture("foo"),
+		" WHERE i.Architecture = $1",
 		"foo")
 	expectWhereClause(t, NewQuery().AnnotationIs("org.fishsoup.nonsense", "foo"),
-		" WHERE i.annotations ? $1",
+		" WHERE i.Annotations ? $1",
 		"org.fishsoup.nonsense")
 	expectWhereClause(t, NewQuery().AnnotationExists("org.fishsoup.nonsense"),
-		" WHERE i.annotations @> $1",
+		" WHERE i.Annotations @> $1",
 		`{"org.fishsoup.nonsense":""}`)
 	expectWhereClause(t, NewQuery().AnnotationMatches("org.fishsoup.nonsense", "foo-*"),
-		" WHERE jsonb_object_field_text(i.annotations, $1) like $2",
+		" WHERE jsonb_object_field_text(i.Annotations, $1) like $2",
 		"org.fishsoup.nonsense", "foo-%")
 
 	expectWhereClause(t, NewQuery(), "")
 	expectWhereClause(t, NewQuery().Repository("foo").Repository("bar"),
-		" WHERE (t.repository = $1 OR t.repository = $2)",
+		" WHERE (t.Repository = $1 OR t.Repository = $2)",
 		"foo", "bar")
 	expectWhereClause(t, NewQuery().Repository("foo").Tag("bar").Tag("baz"),
-		" WHERE t.repository = $1 AND (t.tag = $2 OR t.tag = $3)",
+		" WHERE t.Repository = $1 AND (t.Tag = $2 OR t.Tag = $3)",
 		"foo", "bar", "baz")
 }
