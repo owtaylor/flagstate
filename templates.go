@@ -53,7 +53,7 @@ title: {{.}}
 {{- with .Description }}
 description: {{.}}
 {{- end }}
-arch: {{.Arch}}
+architecture: {{.Architecture}}
 os: {{.OS}}
 annotations:
 {{- range $k, $v := .Annotations}}

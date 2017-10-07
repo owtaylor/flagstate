@@ -129,8 +129,8 @@ func makeWhereClause(query *Query) (clause string, args []interface{}) {
 		wb.makeWhereSubclause(`i.OS`, query.os)
 	}
 
-	if len(query.arch) > 0 {
-		wb.makeWhereSubclause(`i.Arch`, query.arch)
+	if len(query.architecture) > 0 {
+		wb.makeWhereSubclause(`i.Architecture`, query.architecture)
 	}
 
 	for annotation, terms := range query.annotations {

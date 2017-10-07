@@ -45,8 +45,8 @@ func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				q.TagMatches(vv)
 			case "os":
 				q.OS(vv)
-			case "arch":
-				q.Arch(vv)
+			case "architecture":
+				q.Architecture(vv)
 			default:
 				is_annotation := false
 				if strings.HasPrefix(k, "annotation:") {

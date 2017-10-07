@@ -5,11 +5,11 @@ import (
 )
 
 type Image struct {
-	Digest      digest.Digest
-	MediaType   string
-	OS          string
-	Arch        string
-	Annotations map[string]string
+	Digest       digest.Digest
+	MediaType    string
+	OS           string
+	Architecture string
+	Annotations  map[string]string
 }
 
 type TaggedImage struct {

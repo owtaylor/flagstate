@@ -20,11 +20,11 @@ type QueryTerm struct {
 }
 
 type Query struct {
-	repository  []QueryTerm
-	tag         []QueryTerm
-	os          []QueryTerm
-	arch        []QueryTerm
-	annotations map[string][]QueryTerm
+	repository   []QueryTerm
+	tag          []QueryTerm
+	os           []QueryTerm
+	architecture []QueryTerm
+	annotations  map[string][]QueryTerm
 }
 
 func NewQuery() *Query {
@@ -53,8 +53,8 @@ func (q *Query) OS(os string) *Query {
 	return q
 }
 
-func (q *Query) Arch(arch string) *Query {
-	q.arch = append(q.arch, QueryTerm{QueryIs, arch})
+func (q *Query) Architecture(architecture string) *Query {
+	q.architecture = append(q.architecture, QueryTerm{QueryIs, architecture})
 	return q
 }
 

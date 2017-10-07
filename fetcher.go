@@ -222,7 +222,7 @@ func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *Imag
 		}
 		architecture, ok := config["architecture"].(string)
 		if ok {
-			image.Arch = architecture
+			image.Architecture = architecture
 		}
 
 		os, ok := config["os"].(string)
@@ -255,7 +255,7 @@ func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *Imag
 		}
 		architecture, ok := config["architecture"].(string)
 		if ok {
-			image.Arch = architecture
+			image.Architecture = architecture
 		}
 
 		os, ok := config["os"].(string)

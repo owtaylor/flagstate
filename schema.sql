@@ -8,7 +8,7 @@ INSERT INTO modification VALUES (now());
 CREATE TABLE image (
        Digest text PRIMARY KEY,
        MediaType text,
-       Arch text,
+       Architecture text,
        OS text,
        Annotations jsonb
 );

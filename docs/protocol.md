@@ -19,7 +19,7 @@ The following query parameters are understood:
 - `repository=<value>`: limit results to images in the given repository
 - `tag=<value>`: limit results to images with a given tag, and  images within image lists with the given tag
 - `os=<value>`: limit results to images for the given operating system. Values are as for [`GOOS`](https://golang.org/doc/install/source#environment).
-- `arch=<value>`: limit results to images for the given architecture. Values are as for [`GOARCH`](https://golang.org/doc/install/source#environment).
+- `architecture=<value>`: limit results to images for the given architecture. Values are as for [`GOARCH`](https://golang.org/doc/install/source#environment).
 - `annotation:<annotation>=<value>`, `annotation:<annotation>:exists=1`: Limit results to images where the annotation `<annotation>` has the given value, or for the `:exists` form, exists with any value.
 - `label:<label>=<value>`, `label:<label>:exists=1`: Limit results to images where the label `<label>` has the given value, or for the `:exists` form, exists with any value.
 
@@ -28,7 +28,7 @@ For parameters with `:exists` suffix, it is undefined what happens if any value 
 For requests to `/static`, Clients SHOULD sort their request parameters by the URL-encoded value of the `<key>=<value>` string. Python example:
 
 ``` python
-params = [('label', 'latest'), ('annotation:org.flatpak.metadata:exists', '1'), ('arch': 'amd64')]
+params = [('label', 'latest'), ('annotation:org.flatpak.metadata:exists', '1'), ('architecture': 'amd64')]
 quoted = [ urllib.quote_plus(k) + '=' + urllib.quote_plus(v) for k, v in params ]
 url = index_server + '/index/static?' + '&'.join(sorted(quoted))
 ```
@@ -71,7 +71,7 @@ The basic structure of the JSON returned from a request is:
 	"Digest": "<digest>",
 	"MediaType": "<media type>",
 	"OS": "<os>",
-	"Arch": "<arch>",
+	"Architecture": "<architecture>",
 	"Annotations": {
 		"org.example.annotations.x": "<value>",
 		"label:com.redhat.component": "<value>",
@@ -83,7 +83,7 @@ The basic structure of the JSON returned from a request is:
 * **`Digest`**: The digest of the image manifest. The manifest can be retrieved be retrieved from the relative url `<registry>/v2/<name>/manifests/<digest>`.
 * **`MediaType`**: `application/vnd.oci.image.manifest.v1+json` or `application/vnd.docker.distribution.manifest.v2+json`
 * **`OS`**: The operating system that this image is for. Values are as for [`GOOS`](https://golang.org/doc/install/source#environment).
-* **`Arch`**: The architecture this image is for. Values are as for [`GOARCH`](https://golang.org/doc/install/source#environment).
+* **`Architecture`**: The architecture this image is for. Values are as for [`GOARCH`](https://golang.org/doc/install/source#environment).
 * **`Annotations`**: Annotations applied to the image. An annotations that starts with label: (which would not be a valid annotation valid according to the OCI specification) represents a label applied to the image.
 
 **Image List**
@@ -102,8 +102,8 @@ The basic structure of the JSON returned from a request is:
 * **`Tags`**: List of all tags applied to the image list. All tags applied to the image list SHOULD be returned, not just the tags matching a `tag` parameter in the query.
 * **`Digest`**: The digest of the Docker manifest list or OCI image index. The contents can be retrieved from the relative url `<registry>/v2/<name>/manifests/<digest>`.
 * **`MediaType`**: `application/vnd.docker.distribution.manifest.list.v2+json` or `application/vnd.oci.image.index.v1+json`
-* **`Images`**: *Matching* images within the image list. For example, if an image list has images for the `i386`, `amd64`, and `arm64` architectures and `arch=amd64` is present in the query, only the amd64 image will be included.
+* **`Images`**: *Matching* images within the image list. For example, if an image list has images for the `i386`, `amd64`, and `arm64` architectures and `architecture=amd64` is present in the query, only the amd64 image will be included.
 
 Notes
 -----
-* For images within an image list, the architecture matched by `arch=` queries and returned in the JSON result is the architecture extracted from the images `config.json`, not the architecture in the manifest list or image index.
+	* For images within an image list, the architecture matched by `architecture=` queries and returned in the JSON result is the architecture extracted from the images `config.json`, not the architecture in the manifest list or image index.
