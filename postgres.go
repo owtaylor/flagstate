@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/docker/distribution/digest"
 	_ "github.com/lib/pq"
 	"log"
@@ -106,13 +107,24 @@ func (ptx postgresTransaction) exec(query string, args ...interface{}) (sql.Resu
 	return res, err
 }
 
+const imageQueryTemplate = `
+WITH x AS
+    (SELECT DISTINCT
+        t.Repository, t.Image
+     FROM imageTag t JOIN image i on i.Digest = t.Image
+     %s)
+SELECT
+     repository,
+     (select to_json(i) from image i where i.Digest = Image) as image,
+     (select jsonb_agg(t.Tag) from imageTag t where t.Image = x.Image and t.Repository = Repository) as tags
+FROM x
+ORDER by Repository
+`
+
 func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
-	imageQuery := `SELECT i.MediaType, i.Digest, i.OS, i.Arch, i.Annotations, t.Repository, t.Tag FROM image i ` +
-		`JOIN imageTag t on t.Image = i.Digest ` +
-		whereClause +
-		` ORDER BY (t.Repository, i.Digest)`
+	imageQuery := fmt.Sprintf(imageQueryTemplate, whereClause)
 
 	rows, err := ptx.tx.Query(imageQuery, args...)
 	if err != nil {
@@ -121,17 +133,13 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 
 	var result []*Repository = make([]*Repository, 0)
 	var currentRepository *Repository
-	var currentImage *TaggedImage
 	for rows.Next() {
-		var mediaType string
-		var imageDigest digest.Digest
-		var os string
-		var arch string
-		var imageAnnotationsJson []byte
+		var image TaggedImage
 		var repository string
-		var tag string
+		var imageJson []byte
+		var tagsJson []byte
 
-		err = rows.Scan(&mediaType, &imageDigest, &os, &arch, &imageAnnotationsJson, &repository, &tag)
+		err = rows.Scan(&repository, &imageJson, &tagsJson)
 		if err != nil {
 			return nil, err
 		}
@@ -142,66 +150,81 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 				Lists:  make([]*TaggedImageList, 0),
 			}
 			result = append(result, currentRepository)
-			currentImage = nil
-		}
-		if currentImage == nil || imageDigest != currentImage.Digest {
-			currentImage = &TaggedImage{
-				Image: Image{
-					Digest:    imageDigest,
-					MediaType: mediaType,
-					OS:        os,
-					Arch:      arch,
-				},
-				Tags: make([]string, 0),
-			}
-			err = json.Unmarshal(imageAnnotationsJson, &currentImage.Annotations)
-			if err != nil {
-				log.Print(err)
-				continue
-			}
-			currentRepository.Images = append(currentRepository.Images, currentImage)
 		}
 
-		currentImage.Tags = append(currentImage.Tags, tag)
+		err = json.Unmarshal(imageJson, &image)
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+		err = json.Unmarshal(tagsJson, &image.Tags)
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+		currentRepository.Images = append(currentRepository.Images, &image)
 	}
 
 	return result, nil
 }
 
+const listQueryTemplate = `
+WITH x AS
+    (SELECT DISTINCT
+         t.Repository, t.List, i.Digest
+     FROM listTag t
+     JOIN listEntry le ON t.List = le.List
+     JOIN image i ON i.Digest = le.Image
+     %s)
+SELECT
+    Repository,
+    to_jsonb((SELECT l FROM list l WHERE l.Digest = x.List)) AS list,
+    jsonb_agg((SELECT image FROM image WHERE image.Digest = x.Digest)) AS images,
+    (SELECT jsonb_agg(t.Tag) from listTag t where t.List = x.List) AS tags
+FROM x
+    JOIN list l ON l.Digest = x.List
+GROUP BY x.Repository, x.List
+`
+
 func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
-	listQuery := `SELECT i.MediaType, i.Digest, i.OS, i.Arch, i.Annotations, t.Repository, t.Tag, l.Digest, l.MediaType, l.Annotations FROM image i ` +
-		`JOIN listEntry e on e.Image = i.Digest ` +
-		`JOIN listTag t on t.List = e.List ` +
-		`JOIN list l on e.List = l.Digest ` +
-		whereClause +
-		` ORDER BY (t.Repository, l.Digest, i.Digest)`
+	listQuery := fmt.Sprintf(listQueryTemplate, whereClause)
 
 	rows, err := ptx.tx.Query(listQuery, args...)
 	if err != nil {
-		return make([]*Repository, 0), err
+		return nil, err
 	}
 
 	var result []*Repository = make([]*Repository, 0)
 	var currentRepository *Repository
-	var currentList *TaggedImageList
-	var currentImage *Image
 	for rows.Next() {
-		var mediaType string
-		var imageDigest digest.Digest
-		var os string
-		var arch string
-		var imageAnnotationsJson []byte
 		var repository string
-		var tag string
-		var listDigest digest.Digest
-		var listMediaType string
-		var listAnnotationsJson []byte
-
-		err = rows.Scan(&mediaType, &imageDigest, &os, &arch, &imageAnnotationsJson, &repository, &tag, &listDigest, &listMediaType, &listAnnotationsJson)
+		var listJson []byte
+		var list TaggedImageList
+		var imagesJson []byte
+		var tagsJson []byte
+		err = rows.Scan(&repository, &listJson, &imagesJson, &tagsJson)
 		if err != nil {
-			return make([]*Repository, 0), err
+			return nil, err
+		}
+
+		err = json.Unmarshal(listJson, &list)
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+
+		err = json.Unmarshal(imagesJson, &list.Images)
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+
+		err = json.Unmarshal(tagsJson, &list.Tags)
+		if err != nil {
+			log.Print(err)
+			continue
 		}
 
 		if currentRepository == nil || repository != currentRepository.Name {
@@ -211,43 +234,9 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 				Lists:  make([]*TaggedImageList, 0),
 			}
 			result = append(result, currentRepository)
-			currentList = nil
-			currentImage = nil
 		}
-		if currentList == nil || listDigest != currentList.Digest {
-			currentList = &TaggedImageList{
-				ImageList: ImageList{
-					Digest:    listDigest,
-					MediaType: listMediaType,
-				},
-				Tags: make([]string, 0),
-			}
-			err = json.Unmarshal(listAnnotationsJson, &currentList.Annotations)
-			if err != nil {
-				log.Print(err)
-				continue
-			}
-			currentRepository.Lists = append(currentRepository.Lists, currentList)
-			currentImage = nil
-		}
-		if currentImage == nil || imageDigest != currentImage.Digest {
-			currentImage = &Image{
-				Digest:    imageDigest,
-				MediaType: mediaType,
-				OS:        os,
-				Arch:      arch,
-			}
-			err = json.Unmarshal(imageAnnotationsJson, &currentImage.Annotations)
-			if err != nil {
-				log.Print(err)
-				continue
-			}
 
-			currentList.Images = append(currentList.Images, currentImage)
-		}
-		if len(currentList.Images) == 1 {
-			currentList.Tags = append(currentList.Tags, tag)
-		}
+		currentRepository.Lists = append(currentRepository.Lists, &list)
 	}
 
 	return result, nil
