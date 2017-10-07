@@ -204,6 +204,7 @@ func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *Imag
 
 	image.Digest = dgst
 	image.Annotations = make(map[string]string)
+	image.Labels = make(map[string]string)
 
 	var labelMap *map[string]interface{}
 
@@ -278,7 +279,7 @@ func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *Imag
 		for label, value := range *labelMap {
 			valueString, ok := value.(string)
 			if ok {
-				image.Annotations["label:"+label] = valueString
+				image.Labels[label] = valueString
 			}
 		}
 	}

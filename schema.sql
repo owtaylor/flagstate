@@ -10,7 +10,8 @@ CREATE TABLE image (
        MediaType text,
        Architecture text,
        OS text,
-       Annotations jsonb
+       Annotations jsonb,
+       Labels jsonb
 );
 CREATE INDEX imageAnnotations ON image USING gin(Annotations);
 

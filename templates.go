@@ -55,9 +55,17 @@ description: {{.}}
 {{- end }}
 architecture: {{.Architecture}}
 os: {{.OS}}
+{{- with .Annotations}}
 annotations:
-{{- range $k, $v := .Annotations}}
+{{- range $k, $v := .}}
     {{$k}}: {{$v}}
+{{- end}}
+{{- end -}}
+{{- with .Labels}}
+labels:
+{{- range $k, $v := .}}
+    {{$k}}: {{$v}}
+{{- end}}
 {{- end -}}
 {{- end}}
 <ul>

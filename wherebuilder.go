@@ -93,19 +93,19 @@ func (wb *whereBuilder) makeWhereSubclause(subject string, terms []QueryTerm) {
 	wb.addPiece("")
 }
 
-func (wb *whereBuilder) makeAnnotationSubclause(annotation string, terms []QueryTerm) {
+func (wb *whereBuilder) makeMapSubclause(name string, key string, terms []QueryTerm) {
 	for _, term := range terms {
 		switch term.queryType {
 		case QueryIs:
-			wb.addPiece(`i.Annotations ? ` + wb.addArg(annotation))
+			wb.addPiece(`i.` + name + ` ? ` + wb.addArg(key))
 		case QueryMatches:
-			wb.addPiece(`jsonb_object_field_text(i.Annotations, ` + wb.addArg(annotation) + `) ` +
+			wb.addPiece(`jsonb_object_field_text(i.` + name + `, ` + wb.addArg(key) + `) ` +
 				`like ` + wb.addArg(likePattern(term.argument)))
 		case QueryExists:
 			argJson, _ := json.Marshal(map[string]string{
-				annotation: term.argument,
+				key: term.argument,
 			})
-			wb.addPiece(`i.Annotations @> ` + wb.addArg(string(argJson)))
+			wb.addPiece(`i.` + name + ` @> ` + wb.addArg(string(argJson)))
 		}
 	}
 	wb.addPiece("")
@@ -134,7 +134,11 @@ func makeWhereClause(query *Query) (clause string, args []interface{}) {
 	}
 
 	for annotation, terms := range query.annotations {
-		wb.makeAnnotationSubclause(annotation, terms)
+		wb.makeMapSubclause("Annotations", annotation, terms)
+	}
+
+	for label, terms := range query.labels {
+		wb.makeMapSubclause("Labels", label, terms)
 	}
 
 	args = wb.args

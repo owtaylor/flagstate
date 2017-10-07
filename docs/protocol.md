@@ -73,9 +73,11 @@ The basic structure of the JSON returned from a request is:
 	"OS": "<os>",
 	"Architecture": "<architecture>",
 	"Annotations": {
-		"org.example.annotations.x": "<value>",
-		"label:com.redhat.component": "<value>",
+		"org.example.annotations.x": "<value>"
 	}
+	"Labels": {
+		"com.redhat.component": "<value>"
+    }
 }
 ```
 
@@ -84,7 +86,8 @@ The basic structure of the JSON returned from a request is:
 * **`MediaType`**: `application/vnd.oci.image.manifest.v1+json` or `application/vnd.docker.distribution.manifest.v2+json`
 * **`OS`**: The operating system that this image is for. Values are as for [`GOOS`](https://golang.org/doc/install/source#environment).
 * **`Architecture`**: The architecture this image is for. Values are as for [`GOARCH`](https://golang.org/doc/install/source#environment).
-* **`Annotations`**: Annotations applied to the image. An annotations that starts with label: (which would not be a valid annotation valid according to the OCI specification) represents a label applied to the image.
+* **`Annotations`**: Annotations applied to the image.
+* **`Labels`**: Labels applied to the image
 
 **Image List**
 

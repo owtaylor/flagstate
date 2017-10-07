@@ -25,11 +25,13 @@ type Query struct {
 	os           []QueryTerm
 	architecture []QueryTerm
 	annotations  map[string][]QueryTerm
+	labels       map[string][]QueryTerm
 }
 
 func NewQuery() *Query {
 	return &Query{
 		annotations: make(map[string][]QueryTerm),
+		labels:      make(map[string][]QueryTerm),
 	}
 }
 
@@ -72,6 +74,24 @@ func (q *Query) AnnotationIs(annotation string, value string) *Query {
 
 func (q *Query) AnnotationMatches(annotation string, pattern string) *Query {
 	q.annotations[annotation] = append(q.annotations[annotation],
+		QueryTerm{QueryMatches, pattern})
+	return q
+}
+
+func (q *Query) LabelExists(label string) *Query {
+	q.labels[label] = append(q.labels[label],
+		QueryTerm{QueryExists, ""})
+	return q
+}
+
+func (q *Query) LabelIs(label string, value string) *Query {
+	q.labels[label] = append(q.labels[label],
+		QueryTerm{QueryIs, value})
+	return q
+}
+
+func (q *Query) LabelMatches(label string, pattern string) *Query {
+	q.labels[label] = append(q.labels[label],
 		QueryTerm{QueryMatches, pattern})
 	return q
 }

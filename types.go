@@ -10,6 +10,7 @@ type Image struct {
 	OS           string
 	Architecture string
 	Annotations  map[string]string
+	Labels       map[string]string
 }
 
 type TaggedImage struct {
@@ -38,13 +39,13 @@ type Repository struct {
 func (im *Image) Title() string {
 	if v := im.Annotations["org.opencontainers.image.title"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:org.label-schema.name"]; v != "" {
+	} else if v := im.Labels["org.label-schema.name"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:io.k8s.display-name"]; v != "" {
+	} else if v := im.Labels["io.k8s.display-name"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:name"]; v != "" {
+	} else if v := im.Labels["name"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:Name"]; v != "" {
+	} else if v := im.Labels["Name"]; v != "" {
 		return v
 	} else {
 		return ""
@@ -53,13 +54,13 @@ func (im *Image) Title() string {
 func (im *Image) Description() string {
 	if v := im.Annotations["org.opencontainers.image.description"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:org.label-schema.description"]; v != "" {
+	} else if v := im.Labels["org.label-schema.description"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:io.k8s.description"]; v != "" {
+	} else if v := im.Labels["io.k8s.description"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:description"]; v != "" {
+	} else if v := im.Labels["description"]; v != "" {
 		return v
-	} else if v := im.Annotations["label:Description"]; v != "" {
+	} else if v := im.Labels["Description"]; v != "" {
 		return v
 	} else {
 		return ""

@@ -78,6 +78,15 @@ func TestMakeWhereClause(t *testing.T) {
 	expectWhereClause(t, NewQuery().AnnotationMatches("org.fishsoup.nonsense", "foo-*"),
 		" WHERE jsonb_object_field_text(i.Annotations, $1) like $2",
 		"org.fishsoup.nonsense", "foo-%")
+	expectWhereClause(t, NewQuery().LabelIs("org.fishsoup.nonsense", "foo"),
+		" WHERE i.Labels ? $1",
+		"org.fishsoup.nonsense")
+	expectWhereClause(t, NewQuery().LabelExists("org.fishsoup.nonsense"),
+		" WHERE i.Labels @> $1",
+		`{"org.fishsoup.nonsense":""}`)
+	expectWhereClause(t, NewQuery().LabelMatches("org.fishsoup.nonsense", "foo-*"),
+		" WHERE jsonb_object_field_text(i.Labels, $1) like $2",
+		"org.fishsoup.nonsense", "foo-%")
 
 	expectWhereClause(t, NewQuery(), "")
 	expectWhereClause(t, NewQuery().Repository("foo").Repository("bar"),

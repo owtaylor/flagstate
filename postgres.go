@@ -355,10 +355,11 @@ func (ptx postgresTransaction) SetImageListTags(repository string, dgst digest.D
 func (ptx postgresTransaction) storeImage(repository string, image *Image) error {
 	log.Printf("Storing image %s/%s", repository, image.Digest)
 	annotationsJson, _ := json.Marshal(image.Annotations)
+	labelsJson, _ := json.Marshal(image.Labels)
 	_, err := ptx.exec(
-		`INSERT INTO image (Digest, MediaType, Architecture, OS, Annotations) `+
-			`VALUES ($1, $2, $3, $4, $5) ON CONFLICT (digest) DO NOTHING `,
-		image.Digest, image.MediaType, image.Architecture, image.OS, annotationsJson)
+		`INSERT INTO image (Digest, MediaType, Architecture, OS, Annotations, Labels) `+
+			`VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (digest) DO NOTHING `,
+		image.Digest, image.MediaType, image.Architecture, image.OS, annotationsJson, labelsJson)
 	return err
 }
 
