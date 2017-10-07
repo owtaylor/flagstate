@@ -9,8 +9,8 @@ type Image struct {
 	MediaType    string
 	OS           string
 	Architecture string
-	Annotations  map[string]string
-	Labels       map[string]string
+	Annotations  map[string]string `json:",omitempty"`
+	Labels       map[string]string `json:",omitempty"`
 }
 
 type TaggedImage struct {
@@ -22,7 +22,7 @@ type ImageList struct {
 	Digest      digest.Digest
 	MediaType   string
 	Images      []*Image
-	Annotations map[string]string
+	Annotations map[string]string `json:",omitempty"`
 }
 
 type TaggedImageList struct {
