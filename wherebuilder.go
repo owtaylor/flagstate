@@ -97,15 +97,15 @@ func (wb *whereBuilder) makeMapSubclause(name string, key string, terms []QueryT
 	for _, term := range terms {
 		switch term.queryType {
 		case QueryIs:
-			wb.addPiece(`i.` + name + ` ? ` + wb.addArg(key))
-		case QueryMatches:
-			wb.addPiece(`jsonb_object_field_text(i.` + name + `, ` + wb.addArg(key) + `) ` +
-				`like ` + wb.addArg(likePattern(term.argument)))
-		case QueryExists:
 			argJson, _ := json.Marshal(map[string]string{
 				key: term.argument,
 			})
 			wb.addPiece(`i.` + name + ` @> ` + wb.addArg(string(argJson)))
+		case QueryMatches:
+			wb.addPiece(`jsonb_object_field_text(i.` + name + `, ` + wb.addArg(key) + `) ` +
+				`like ` + wb.addArg(likePattern(term.argument)))
+		case QueryExists:
+			wb.addPiece(`i.` + name + ` ? ` + wb.addArg(key))
 		}
 	}
 	wb.addPiece("")
