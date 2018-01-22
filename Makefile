@@ -21,16 +21,16 @@ coverage:
 
 reset-data:
 	docker-compose down || true
-	docker volume rm metastore_db metastore_registry || true
+	docker volume rm flagstate_db flagstate_registry || true
 
 trust-local:
-	docker-compose exec frontend cat /etc/pki/tls/certs/metastore_ca.crt > metastore.crt
-	sudo sh -c 'cp metastore.crt /etc/pki/ca-trust/source/anchors/ && update-ca-trust'
+	docker-compose exec frontend cat /etc/pki/tls/certs/flagstate_ca.crt > flagstate.crt
+	sudo sh -c 'cp flagstate.crt /etc/pki/ca-trust/source/anchors/ && update-ca-trust'
 	sudo sh -c 'grep -l registry.local.fishsoup.net /etc/hosts > /dev/null || echo "127.0.0.1	registry.local.fishsoup.net" >> /etc/hosts'
-	rm -f metastore.crt
+	rm -f flagstate.crt
 
 untrust-local:
-	sudo sh -c 'rm /etc/pki/ca-trust/source/anchors/metastore.crt && update-ca-trust'
+	sudo sh -c 'rm /etc/pki/ca-trust/source/anchors/flagstate.crt && update-ca-trust'
 	sudo sh -c 'sed -i /registry.local.fishsoup.net/d /etc/hosts'
 
 MARKDOWN=					\

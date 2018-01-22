@@ -8,7 +8,7 @@ events:
     token: "OPEN_SESAME"
 database:
     postgres:
-        url: postgres://metastore:mypassword@db:5432/metastore?sslmode=disable
+        url: postgres://flagstate:mypassword@db:5432/flagstate?sslmode=disable
 cache:
     max_age_index: 1s
     max_age_html: 1s

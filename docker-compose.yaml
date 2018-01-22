@@ -12,8 +12,8 @@ services:
         ports:
             - 7432:5432
         environment:
-            - POSTGRES_DB=metastore
-            - POSTGRES_USER=metastore
+            - POSTGRES_DB=flagstate
+            - POSTGRES_USER=flagstate
             - POSTGRES_PASSWORD=mypassword
         volumes:
             - db:/var/lib/postgresql/data:z

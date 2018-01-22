@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var configFile = flag.String("config", "/etc/metastore/config.yaml", "Path to configuration file")
+var configFile = flag.String("config", "/etc/flagstate/config.yaml", "Path to configuration file")
 
 func internalError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "text/plain")
@@ -94,6 +94,6 @@ func main() {
 		})
 	}
 
-	log.Printf("metastore: %s", BuildString)
+	log.Printf("flagstate: %s", BuildString)
 	log.Fatal(http.ListenAndServe(":8088", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)))
 }

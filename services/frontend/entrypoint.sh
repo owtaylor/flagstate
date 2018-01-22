@@ -2,7 +2,7 @@
 
 set -e
 
-if ! [ -e /etc/pki/tls/certs/metastore.crt ] ; then
+if ! [ -e /etc/pki/tls/certs/flagstate.crt ] ; then
     generate-cert.sh
 fi
 

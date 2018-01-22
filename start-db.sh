@@ -5,9 +5,9 @@ if [ "$1" = "--refresh" ] ; then
     refresh=true
 fi
 
-if docker ps -f name=metastore-db | grep metastore-db > /dev/null ; then
+if docker ps -f name=flagstate-db | grep flagstate-db > /dev/null ; then
     if $refresh ; then
-	docker rm -f metastore-db
+	docker rm -f flagstate-db
     else
 	echo "Already running"
 	exit 1
@@ -15,28 +15,28 @@ if docker ps -f name=metastore-db | grep metastore-db > /dev/null ; then
 fi
 
 exists=false
-if docker volume ls | grep metastore-db > /dev/null ; then
+if docker volume ls | grep flagstate-db > /dev/null ; then
     exists=true
 fi
 
 if $refresh ; then
-    docker volume rm metastore-db || true
+    docker volume rm flagstate-db || true
     exists=false
 fi
 
 docker run					\
        --detach                                 \
        --rm=true				\
-       --name=metastore-db			\
-       -v metastore-db:/var/lib/pgsql/data	\
+       --name=flagstate-db			\
+       -v flagstate-db:/var/lib/pgsql/data	\
        -p 7432:5432				\
-       -e POSTGRES_DB=metastore			\
-       -e POSTGRES_USER=metastore		\
+       -e POSTGRES_DB=flagstate			\
+       -e POSTGRES_USER=flagstate		\
        -e POSTGRES_PASSWORD=mypassword		\
        postgres
 
 while true ; do
-    if $(dirname $0)/psql.sh -l 2>/dev/null | grep metastore ; then
+    if $(dirname $0)/psql.sh -l 2>/dev/null | grep flagstate ; then
 	break
     fi
     sleep 1

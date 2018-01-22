@@ -1,6 +1,6 @@
-Metastore
+Flagstate
 ---------
-metastore is a service designed to be deployed alongside a
+flagstate is a service designed to be deployed alongside a
 [docker/distribution](https://github.com/docker/distribution/) registry instance
 to collect and serve up metadata for images in the registry. Being separate from
 the registry has a number of advantages:
@@ -12,7 +12,7 @@ the registry has a number of advantages:
 
 See https://github.com/docker/distribution/issues/206
 
-Some possible ways that metastore could be used:
+Some possible ways that flagstate could be used:
 
  * Providing comprehensive dumps of metadata
  * Providing a simple web interface to allow seeing what is in the registry
@@ -20,7 +20,7 @@ Some possible ways that metastore could be used:
 
 Design
 ------
-The basic idea is that metastore scans the registry, either entirely, or as
+The basic idea is that flagstate scans the registry, either entirely, or as
 updated by [webhook notifications](https://docs.docker.com/registry/notifications/),
 and then the information that is harvested is stored into a database.
 The current code stores the metadata in a Postgresql database, using a
@@ -89,8 +89,8 @@ There is a test environment that can be started with:
 docker-compose up
 ```
 
-This starts a cluster of database, registry, metastore and a web proxy that joins
-the registry and metastore into a single web presence, available on
+This starts a cluster of database, registry, flagstate and a web proxy that joins
+the registry and flagstate into a single web presence, available on
 http://127.0.0.1:7080, or https://127.0.0.1:7443. On Fedora or RHEL you can
 
 ```
@@ -105,4 +105,4 @@ via HTTPS and expect a verifiable certificate.)
 
 License
 -------
-metastore is distributed is distributed under the [Apache License, Version 2.0](LICENSE).
+flagstate is distributed is distributed under the [Apache License, Version 2.0](LICENSE).

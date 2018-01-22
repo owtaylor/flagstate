@@ -1,6 +1,6 @@
 FROM fedora:26
 
-ENV DISTRIBUTION_DIR /go/src/github.com/owtaylor/metastore
+ENV DISTRIBUTION_DIR /go/src/github.com/owtaylor/flagstate
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1483553
 RUN ( dnf --refresh -y update glibc || true ) && \

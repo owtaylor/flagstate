@@ -1,13 +1,13 @@
 #!/bin/sh
 
 psql() {
-    PGPASSWORD=mypassword /usr/bin/psql -h db -U metastore "$@"
+    PGPASSWORD=mypassword /usr/bin/psql -h db -U flagstate "$@"
 }
 
 topdir=$(dirname $0)/../..
 
 while true ; do
-    if psql -l | grep -q metastore ; then
+    if psql -l | grep -q flagstate ; then
 	break
     fi
     sleep 1
@@ -22,4 +22,4 @@ if ! $exists ; then
     psql < schema.sql
 fi
 
-exec $topdir/metastore -config $(dirname $0)/config.yaml
+exec $topdir/flagstate -config $(dirname $0)/config.yaml
