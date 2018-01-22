@@ -1,8 +1,20 @@
-package main
+package web
 
 import (
 	"testing"
 )
+
+func stringsEqual(a []string, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
 
 func expectParseIfMatch(t *testing.T, input string, expected []string) {
 	res, err := ParseIfMatch(input)

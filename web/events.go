@@ -1,16 +1,18 @@
-package main
+package web
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/docker/distribution/notifications"
+	"github.com/owtaylor/flagstate"
+	"github.com/owtaylor/flagstate/fetcher"
 	"net/http"
 	"strings"
 )
 
 type eventHandler struct {
-	config  *Config
-	fetcher *Fetcher
+	config  *flagstate.Config
+	fetcher *fetcher.Fetcher
 }
 
 func (eh *eventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

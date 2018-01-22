@@ -1,4 +1,4 @@
-package main
+package flagstate
 
 import (
 	"github.com/docker/distribution/digest"

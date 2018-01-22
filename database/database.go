@@ -1,8 +1,9 @@
-package main
+package database
 
 import (
 	"context"
 	"github.com/docker/distribution/digest"
+	"github.com/owtaylor/flagstate"
 	"time"
 )
 
@@ -101,10 +102,10 @@ type Tx interface {
 	Rollback() error
 	Modified() (bool, time.Time)
 
-	DoQuery(query *Query) ([]*Repository, error)
+	DoQuery(query *Query) ([]*flagstate.Repository, error)
 
-	StoreImage(repository string, image *TaggedImage) error
-	StoreImageList(repository string, list *TaggedImageList) error
+	StoreImage(repository string, image *flagstate.TaggedImage) error
+	StoreImageList(repository string, list *flagstate.TaggedImageList) error
 
 	SetImageTags(repository string, dgst digest.Digest, tags []string) error
 	SetImageListTags(repository string, dgst digest.Digest, tags []string) error
@@ -119,7 +120,7 @@ type Tx interface {
 type Database interface {
 	Begin(ctx context.Context) (Tx, error)
 	// Convenience
-	DoQuery(ctx context.Context, query *Query) ([]*Repository, error)
+	DoQuery(ctx context.Context, query *Query) ([]*flagstate.Repository, error)
 
 	ModificationTime() (time.Time, error)
 }

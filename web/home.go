@@ -1,15 +1,17 @@
-package main
+package web
 
 import (
 	"context"
+	"github.com/owtaylor/flagstate"
+	"github.com/owtaylor/flagstate/database"
 	"html/template"
 	"log"
 	"net/http"
 )
 
 type homeHandler struct {
-	config *Config
-	db     Database
+	config *flagstate.Config
+	db     database.Database
 }
 
 var homeTemplate *template.Template
@@ -29,7 +31,7 @@ func (hh *homeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	results, err := hh.db.DoQuery(ctx, NewQuery())
+	results, err := hh.db.DoQuery(ctx, database.NewQuery())
 	if err != nil {
 		internalError(w, err)
 		return

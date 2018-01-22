@@ -1,4 +1,4 @@
 codehilite.css
-coverage.out
-flagstate
+/coverage*.out
+/flagstate
 html

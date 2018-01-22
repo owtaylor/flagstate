@@ -1,4 +1,4 @@
-package main
+package fetcher
 
 import (
 	"context"
@@ -13,14 +13,17 @@ import (
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/distribution/registry/client/transport"
 	"github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/owtaylor/flagstate"
+	"github.com/owtaylor/flagstate/database"
+	"github.com/owtaylor/flagstate/util"
 	"io"
 	"log"
 	"sort"
 )
 
 type Fetcher struct {
-	db          Database
-	changes     *ChangeBroadcaster
+	db          database.Database
+	changes     *util.ChangeBroadcaster
 	registryUrl string
 	channel     chan fetchRequest
 }
@@ -40,7 +43,7 @@ type fetchRequest struct {
 	lowPriority bool
 }
 
-func NewFetcher(db Database, changes *ChangeBroadcaster, registryUrl string) *Fetcher {
+func NewFetcher(db database.Database, changes *util.ChangeBroadcaster, registryUrl string) *Fetcher {
 	f := Fetcher{
 		db:          db,
 		changes:     changes,
@@ -77,7 +80,7 @@ func (f *Fetcher) dispatch() {
 
 	// Start a pool of goroutines that will fetch information about
 	// repositories.
-	dispatcher := NewRepoDispatcher()
+	dispatcher := util.NewRepoDispatcher()
 	for i := 0; i < 5; i++ {
 		go func() {
 			ctx := context.Background()
@@ -130,7 +133,7 @@ func (f *Fetcher) garbageCollect(ctx context.Context) error {
 	return tx.Commit()
 }
 
-func (f *Fetcher) checkModification(tx Tx) {
+func (f *Fetcher) checkModification(tx database.Tx) {
 	modified, _ := tx.Modified()
 	if modified {
 		f.changes.Change()
@@ -196,7 +199,7 @@ func (f *Fetcher) fetchAll(ctx context.Context) error {
 	return nil
 }
 
-func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *Image) error {
+func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *flagstate.Image) error {
 	mfst, err := op.manifests.Get(op.ctx, dgst)
 	if err != nil {
 		return err
@@ -287,7 +290,7 @@ func (f *Fetcher) fetchImage(op *fetchOperation, dgst digest.Digest, image *Imag
 	return nil
 }
 
-func (f *Fetcher) fetchImageList(op *fetchOperation, dgst digest.Digest, list *ImageList) error {
+func (f *Fetcher) fetchImageList(op *fetchOperation, dgst digest.Digest, list *flagstate.ImageList) error {
 	mfst, err := op.manifests.Get(op.ctx, dgst)
 	if err != nil {
 		return err
@@ -300,7 +303,7 @@ func (f *Fetcher) fetchImageList(op *fetchOperation, dgst digest.Digest, list *I
 	case *manifestlist.DeserializedManifestList:
 		list.MediaType = v.MediaType
 		for _, descriptor := range v.Manifests {
-			var image Image
+			var image flagstate.Image
 			err := f.fetchImage(op, descriptor.Digest, &image)
 			if err != nil {
 				return err
@@ -359,15 +362,15 @@ func stringsEqual(a []string, b []string) bool {
 	return true
 }
 
-func (f *Fetcher) updateRepositoryInDatabase(op *fetchOperation, tx Tx, imageTags map[string]digest.Digest, listTags map[string]digest.Digest) error {
+func (f *Fetcher) updateRepositoryInDatabase(op *fetchOperation, tx database.Tx, imageTags map[string]digest.Digest, listTags map[string]digest.Digest) error {
 	repository := op.repo.Named().Name()
-	repositories, err := tx.DoQuery(NewQuery().Repository(repository))
+	repositories, err := tx.DoQuery(database.NewQuery().Repository(repository))
 	if err != nil {
 		return err
 	}
 
-	oldImages := make(map[digest.Digest]*TaggedImage)
-	oldLists := make(map[digest.Digest]*TaggedImageList)
+	oldImages := make(map[digest.Digest]*flagstate.TaggedImage)
+	oldLists := make(map[digest.Digest]*flagstate.TaggedImageList)
 	if len(repositories) > 0 {
 		oldRepo := repositories[0]
 		for _, image := range oldRepo.Images {
@@ -389,7 +392,7 @@ func (f *Fetcher) updateRepositoryInDatabase(op *fetchOperation, tx Tx, imageTag
 		sort.Strings(newTags)
 		oldImage := oldImages[dgst]
 		if oldImage == nil {
-			var image TaggedImage
+			var image flagstate.TaggedImage
 			err := f.fetchImage(op, dgst, &image.Image)
 			if err != nil {
 				return err
@@ -425,7 +428,7 @@ func (f *Fetcher) updateRepositoryInDatabase(op *fetchOperation, tx Tx, imageTag
 		sort.Strings(newTags)
 		oldList := oldLists[dgst]
 		if oldList == nil {
-			var list TaggedImageList
+			var list flagstate.TaggedImageList
 			err := f.fetchImageList(op, dgst, &list.ImageList)
 			if err != nil {
 				return err

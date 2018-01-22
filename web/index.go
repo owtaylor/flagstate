@@ -1,23 +1,25 @@
-package main
+package web
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/owtaylor/flagstate"
+	"github.com/owtaylor/flagstate/database"
 	"log"
 	"net/http"
 	"strings"
 )
 
 type indexHandler struct {
-	config  *Config
-	db      Database
+	config  *flagstate.Config
+	db      database.Database
 	dynamic bool
 }
 
 func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Registry string
-		Results  []*Repository
+		Results  []*flagstate.Repository
 	}
 
 	if ih.config.Registry.PublicUrl != "" {
@@ -32,7 +34,7 @@ func (ih *indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-	q := NewQuery()
+	q := database.NewQuery()
 
 	for k, v := range r.Form {
 		for _, vv := range v {

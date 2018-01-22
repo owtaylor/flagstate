@@ -1,7 +1,10 @@
-package main
+package web
 
 import (
 	"fmt"
+	"github.com/owtaylor/flagstate"
+	"github.com/owtaylor/flagstate/database"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -49,7 +52,7 @@ func SetCacheControl(w http.ResponseWriter, maxAge time.Duration, dynamic bool) 
 	w.Header().Set("Cache-Control", value)
 }
 
-func CheckAndSetETag(db Database, w http.ResponseWriter, r *http.Request) bool {
+func CheckAndSetETag(db database.Database, w http.ResponseWriter, r *http.Request) bool {
 	modificationTime, err := db.ModificationTime()
 	if err != nil {
 		internalError(w, err)
@@ -65,7 +68,7 @@ func CheckAndSetETag(db Database, w http.ResponseWriter, r *http.Request) bool {
 	// In production it would cause cache misses during a rolling deploypment,
 	// but still would have the intended effect of avoiding validation of
 	// data generated with the old build.
-	etag := `"` + BuildId + "-" + modificationTime.Format(time.RFC3339Nano) + `"`
+	etag := `"` + flagstate.BuildId + "-" + modificationTime.Format(time.RFC3339Nano) + `"`
 
 	for _, val := range r.Header["If-None-Match"] {
 		candidates, err := ParseIfMatch(val)
@@ -85,4 +88,18 @@ func CheckAndSetETag(db Database, w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("ETag", etag)
 
 	return false
+}
+
+func internalError(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusInternalServerError)
+	log.Print(err)
+	fmt.Fprintf(w, "Error: %v\n", err)
+}
+
+func badRequest(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusBadRequest)
+	log.Print(err)
+	fmt.Fprintf(w, "Error: %v\n", err)
 }

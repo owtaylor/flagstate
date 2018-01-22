@@ -1,4 +1,4 @@
-package main
+package flagstate
 
 import (
 	"crypto/sha256"

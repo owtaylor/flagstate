@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/docker/distribution/digest"
 	_ "github.com/lib/pq"
+	"github.com/owtaylor/flagstate"
 	"log"
 	"sort"
 	"time"
@@ -41,7 +42,7 @@ func (pdb *postgresDatabase) Begin(ctx context.Context) (Tx, error) {
 	return ptx, err
 }
 
-func (pdb *postgresDatabase) DoQuery(ctx context.Context, query *Query) ([]*Repository, error) {
+func (pdb *postgresDatabase) DoQuery(ctx context.Context, query *Query) ([]*flagstate.Repository, error) {
 	tx, err := pdb.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -121,20 +122,20 @@ FROM x
 ORDER by Repository
 `
 
-func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error) {
+func (ptx postgresTransaction) doImageQuery(query *Query) ([]*flagstate.Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
 	imageQuery := fmt.Sprintf(imageQueryTemplate, whereClause)
 
 	rows, err := ptx.tx.Query(imageQuery, args...)
 	if err != nil {
-		return make([]*Repository, 0), err
+		return make([]*flagstate.Repository, 0), err
 	}
 
-	var result []*Repository = make([]*Repository, 0)
-	var currentRepository *Repository
+	var result []*flagstate.Repository = make([]*flagstate.Repository, 0)
+	var currentRepository *flagstate.Repository
 	for rows.Next() {
-		var image TaggedImage
+		var image flagstate.TaggedImage
 		var repository string
 		var imageJson []byte
 		var tagsJson []byte
@@ -144,10 +145,10 @@ func (ptx postgresTransaction) doImageQuery(query *Query) ([]*Repository, error)
 			return nil, err
 		}
 		if currentRepository == nil || repository != currentRepository.Name {
-			currentRepository = &Repository{
+			currentRepository = &flagstate.Repository{
 				Name:   repository,
-				Images: make([]*TaggedImage, 0),
-				Lists:  make([]*TaggedImageList, 0),
+				Images: make([]*flagstate.TaggedImage, 0),
+				Lists:  make([]*flagstate.TaggedImageList, 0),
 			}
 			result = append(result, currentRepository)
 		}
@@ -186,7 +187,7 @@ FROM x
 GROUP BY x.Repository, x.List
 `
 
-func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) {
+func (ptx postgresTransaction) doListQuery(query *Query) ([]*flagstate.Repository, error) {
 	whereClause, args := makeWhereClause(query)
 
 	listQuery := fmt.Sprintf(listQueryTemplate, whereClause)
@@ -196,12 +197,12 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 		return nil, err
 	}
 
-	var result []*Repository = make([]*Repository, 0)
-	var currentRepository *Repository
+	var result []*flagstate.Repository = make([]*flagstate.Repository, 0)
+	var currentRepository *flagstate.Repository
 	for rows.Next() {
 		var repository string
 		var listJson []byte
-		var list TaggedImageList
+		var list flagstate.TaggedImageList
 		var imagesJson []byte
 		var tagsJson []byte
 		err = rows.Scan(&repository, &listJson, &imagesJson, &tagsJson)
@@ -228,10 +229,10 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 		}
 
 		if currentRepository == nil || repository != currentRepository.Name {
-			currentRepository = &Repository{
+			currentRepository = &flagstate.Repository{
 				Name:   repository,
-				Images: make([]*TaggedImage, 0),
-				Lists:  make([]*TaggedImageList, 0),
+				Images: make([]*flagstate.TaggedImage, 0),
+				Lists:  make([]*flagstate.TaggedImageList, 0),
 			}
 			result = append(result, currentRepository)
 		}
@@ -242,7 +243,7 @@ func (ptx postgresTransaction) doListQuery(query *Query) ([]*Repository, error) 
 	return result, nil
 }
 
-func (ptx postgresTransaction) DoQuery(query *Query) ([]*Repository, error) {
+func (ptx postgresTransaction) DoQuery(query *Query) ([]*flagstate.Repository, error) {
 	imageRepos, err := ptx.doImageQuery(query)
 	if err != nil {
 		return nil, err
@@ -254,7 +255,7 @@ func (ptx postgresTransaction) DoQuery(query *Query) ([]*Repository, error) {
 
 	i := 0
 	j := 0
-	result := make([]*Repository, 0)
+	result := make([]*flagstate.Repository, 0)
 	for i < len(imageRepos) || j < len(listRepos) {
 		if i < len(imageRepos) && j < len(listRepos) {
 			if imageRepos[i].Name == listRepos[j].Name {
@@ -352,7 +353,7 @@ func (ptx postgresTransaction) SetImageListTags(repository string, dgst digest.D
 	return ptx.setTags(repository, "list", "List", dgst, tags)
 }
 
-func (ptx postgresTransaction) storeImage(repository string, image *Image) error {
+func (ptx postgresTransaction) storeImage(repository string, image *flagstate.Image) error {
 	log.Printf("Storing image %s/%s", repository, image.Digest)
 	annotationsJson, _ := json.Marshal(image.Annotations)
 	labelsJson, _ := json.Marshal(image.Labels)
@@ -363,7 +364,7 @@ func (ptx postgresTransaction) storeImage(repository string, image *Image) error
 	return err
 }
 
-func (ptx postgresTransaction) StoreImage(repository string, image *TaggedImage) error {
+func (ptx postgresTransaction) StoreImage(repository string, image *flagstate.TaggedImage) error {
 	err := ptx.storeImage(repository, &image.Image)
 	if err != nil {
 		return err
@@ -372,7 +373,7 @@ func (ptx postgresTransaction) StoreImage(repository string, image *TaggedImage)
 	return ptx.SetImageTags(repository, image.Digest, image.Tags)
 }
 
-func (ptx postgresTransaction) storeImageList(repository string, list *ImageList) error {
+func (ptx postgresTransaction) storeImageList(repository string, list *flagstate.ImageList) error {
 	log.Printf("Storing list %s/%s", repository, list.Digest)
 	annotationsJson, _ := json.Marshal(list.Annotations)
 	res, err := ptx.exec(
@@ -408,7 +409,7 @@ func (ptx postgresTransaction) storeImageList(repository string, list *ImageList
 	return nil
 }
 
-func (ptx postgresTransaction) StoreImageList(repository string, list *TaggedImageList) error {
+func (ptx postgresTransaction) StoreImageList(repository string, list *flagstate.TaggedImageList) error {
 	err := ptx.storeImageList(repository, &list.ImageList)
 	if err != nil {
 		return err

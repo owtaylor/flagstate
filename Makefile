@@ -4,20 +4,22 @@ hooks:
 	@: ; \
 	gitdir=$$(git rev-parse --git-dir) ; \
 	if [ -d $$gitdir/hooks ] ; then \
-	    cmp $$gitdir/../util/pre-commit  $$gitdir/hooks/pre-commit 2>/dev/null || \
-	         echo "Updating $$gitdir/hooks/pre-commit" && cp $$gitdir/../util/pre-commit $$gitdir/hooks/pre-commit ; \
+	    cmp $$gitdir/../tools/pre-commit  $$gitdir/hooks/pre-commit 2>/dev/null || \
+	         echo "Updating $$gitdir/hooks/pre-commit" && cp $$gitdir/../tools/pre-commit $$gitdir/hooks/pre-commit ; \
 	fi
 
 binary:
 	v=`git describe --always --dirty=*` ; \
         t=`date +"%Y-%m-%dT%H:%M:%SZ"` ; \
-	    go build -ldflags "-X main.GitVersion=$$v -X main.BuildTime=$$t"
+	    go build -ldflags "-X main.GitVersion=$$v -X main.BuildTime=$$t" ./cmd/flagstate
 
 test:
-	go test
+	go test ./database ./util ./web
 
 coverage:
-	go test -coverprofile=coverage.out && go tool cover -html=coverage.out
+	for d in database util web ; do \
+		go test -coverprofile=coverage-$$d.out ./$$d && go tool cover -html=coverage-$$d.out ; \
+	done
 
 reset-data:
 	docker-compose down || true

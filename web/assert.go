@@ -1,9 +1,12 @@
-package main
+package web
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/owtaylor/flagstate"
+	"github.com/owtaylor/flagstate/database"
+	"github.com/owtaylor/flagstate/util"
 	"log"
 	"net/http"
 	"strconv"
@@ -25,8 +28,8 @@ type Failure struct {
 }
 
 type assertHandler struct {
-	db      Database
-	changes *ChangeBroadcaster
+	db      database.Database
+	changes *util.ChangeBroadcaster
 }
 
 func jsonContains(a interface{}, b interface{}) bool {
@@ -99,13 +102,13 @@ func checkAssertions(result interface{}, assertions []Assertion) (failures []Fai
 
 func (ah *assertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Query_     Query `json:"Query"`
+		Query_     database.Query `json:"Query"`
 		Assertions []Assertion
 	}
 
 	var reply struct {
 		Success  bool
-		Results  []*Repository
+		Results  []*flagstate.Repository
 		Failures []Failure
 	}
 
