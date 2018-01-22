@@ -1,0 +1,4 @@
+docker:docker.io/library/busybox:latest * test.list/busybox:latest
+docker:docker.io/library/busybox:latest amd64 test/busybox:latest
+dir:banner-flatpak-oci * flatpak.list/banner:latest
+dir:banner-flatpak-oci amd64 flatpak/banner:latest
