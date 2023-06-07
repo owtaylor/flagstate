@@ -109,4 +109,4 @@ The basic structure of the JSON returned from a request is:
 
 Notes
 -----
-	* For images within an image list, the architecture matched by `architecture=` queries and returned in the JSON result is the architecture extracted from the images `config.json`, not the architecture in the manifest list or image index.
+* For images within an image list, the architecture matched by `architecture=` queries and returned in the JSON result is the architecture extracted from the images `config.json`, not the architecture in the manifest list or image index.
