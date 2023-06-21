@@ -25,6 +25,12 @@ The following query parameters are understood:
 
 For parameters with `:exists` suffix, it is undefined what happens if any value other than `1` is specified.
 
+An image&nbsp;<var>I</var> matches a given set of query
+parameters&nbsp;<var>S</var> iff: For each <var>K</var>=<var>V</var>
+in&nbsp;<var>S</var>: There exists a <var>K&prime;</var>=<var>V&prime;</var>
+in&nbsp;<var>S</var> with: Both <var>K</var> = <var>K&prime;</var> and
+<var>I</var> matches <var>K&prime;</var>=<var>V&prime;</var>.
+
 
 
 For requests to `/static`, Clients SHOULD sort their request parameters by the URL-encoded value of the `<key>=<value>` string. Python example:
