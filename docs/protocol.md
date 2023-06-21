@@ -23,7 +23,9 @@ The following query parameters are understood:
 - `annotation:<annotation>=<value>`, `annotation:<annotation>:exists=1`: Limit results to images where the annotation `<annotation>` has the given value, or for the `:exists` form, exists with any value.
 - `label:<label>=<value>`, `label:<label>:exists=1`: Limit results to images where the label `<label>` has the given value, or for the `:exists` form, exists with any value.
 
-For parameters with `:exists` suffix, it is undefined what happens if any value other `1` is specified.
+For parameters with `:exists` suffix, it is undefined what happens if any value other than `1` is specified.
+
+
 
 For requests to `/static`, Clients SHOULD sort their request parameters by the URL-encoded value of the `<key>=<value>` string. Python example:
 
