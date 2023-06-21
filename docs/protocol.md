@@ -119,3 +119,4 @@ Notes
 -----
 * For images within an image list, the architecture matched by `architecture=` queries and returned in the JSON result is the architecture extracted from the images `config.json`, not the architecture in the manifest list or image index.
 * Even though the protocol allows for annotations (in addition to labels) and for lists of images (in addition to individual images), the current implementation does not make use of those two features.
+* In requests, clients SHOULD always specify a `label:org.flatpak.ref:exists=1` query parameter, to limit their requests to flatpak images.
